@@ -1,0 +1,18 @@
+# Core dependencies for Melissa E-E-A-T Idea Factory
+
+# AI/LLM APIs
+openai>=1.0.0
+anthropic>=0.18.0
+
+# Web scraping & parsing
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Reddit API (optional - for auto-discovery)
+praw>=7.7.0
+
+# RSS feed parsing (NEW - for RSS source integration)
+feedparser>=6.0.10
+
+# Environment variables
+python-dotenv>=1.0.0
