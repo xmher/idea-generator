@@ -86,20 +86,20 @@ API_MAX_RETRIES = 3
 # --- Reddit Auto-Discovery Configuration ---
 SUBREDDIT_CONFIG = {
     # --- Pillar 1 & 2: Advertising Accountability & Strategy ---
-    "adops": 25,              "adtech": 10,             "advertising": 100,
-    "PPC": 150,               "marketing": 300,         "socialmedia": 100,
-    "digital_marketing": 200, "SEO": 300,
-    "BusinessOfMedia": 10,    "publishing": 50,         "agency": 50,
-    "strategy": 25,           "branding": 100,
-    
+    "adops": 10,              "adtech": 5,              "advertising": 50,
+    "PPC": 50,                "marketing": 100,         "socialmedia": 50,
+    "digital_marketing": 75,  "SEO": 100,
+    "BusinessOfMedia": 5,     "publishing": 25,         "agency": 25,
+    "strategy": 10,           "branding": 50,
+
     # --- Pillar 3: Media Analysis, AI & Automation ---
-    "datascience": 200,       "martech": 50,
-    "PublicRelations": 75,    "TechSEO": 25,
-    "learnpython": 100,       "MachineLearning": 200,   
-    "Automation": 200,        "fintech": 50,            "privacy": 200,
+    "datascience": 100,       "martech": 25,
+    "PublicRelations": 40,    "TechSEO": 10,
+    "learnpython": 50,        "MachineLearning": 100,
+    "Automation": 100,        "fintech": 25,            "privacy": 100,
 }
 
-HOURS_WINDOW = 24
+HOURS_WINDOW = 48  # Expanded from 24h to 48h to catch more posts
 MIN_PROCESSING_SCORE = 0.65  # Lowered from 0.70 to catch more good Reddit posts
 PROCESSED_IDS_FILE = "processed_posts.txt"
 
@@ -128,7 +128,7 @@ RSS_FEEDS = [
 
 RSS_CONFIG = {
     "max_entries_per_feed": 20,
-    "max_age_hours": 48,
+    "max_age_hours": 168,  # 7 days - RSS feeds don't update as frequently
     "use_high_priority_only": True,
 }
 
