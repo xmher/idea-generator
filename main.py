@@ -589,7 +589,7 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
     <hr />
 
     <h3>Deep Research Prompt (Copy This)</h3>
-    <pre style="background-color:#f5f5f5; border:1px solid #ccc; padding:10px; border-radius:4px; white-space: pre-wrap; word-wrap: break-word;">{research_prompt_escaped}</pre>
+    <textarea readonly style="width:100%; min-height:400px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #ccc; border-radius:4px;">{research_prompt_escaped}</textarea>
     
     <hr />
     
