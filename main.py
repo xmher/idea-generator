@@ -1,8 +1,8 @@
 # main.py
-# VERSION 7.3: "Melissa" E-E-A-T Idea Factory (Comms & Ad Focus)
-# FIXED KeyError by passing all constants into the .format() calls.
+# VERSION 8.0: "Melissa" E-E-A-T Idea Factory (Advertising Investment & Accountability Focus)
+# Integrated RSS feeds + Reddit auto-discovery with shared relevance filtering
 
-import os, re, json, argparse, logging, time
+import os, re, json, argparse, logging, time, hashlib
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from datetime import datetime, timezone, timedelta
@@ -23,6 +23,12 @@ try:
 except ImportError:
     praw = None
     print("WARNING: Missing 'praw' library. Reddit API unavailable.")
+
+try:
+    import feedparser
+except ImportError:
+    feedparser = None
+    print("WARNING: Missing 'feedparser' library. RSS feeds unavailable. Install with 'pip install feedparser'.")
 
 import prompts as P
 
@@ -94,8 +100,112 @@ SUBREDDIT_CONFIG = {
 }
 
 HOURS_WINDOW = 24
-MIN_PROCESSING_SCORE = 0.70 
+MIN_PROCESSING_SCORE = 0.70
 PROCESSED_IDS_FILE = "processed_posts.txt"
+
+# --- RSS Feed Sources Configuration ---
+RSS_FEEDS = [
+    # Pillar 1: Media Accountability & Performance
+    {"name": "AdExchanger", "url": "https://adexchanger.com/feed/", "priority": "high"},
+    {"name": "AdAge", "url": "https://adage.com/rss-feed", "priority": "high"},
+    {"name": "Digiday", "url": "https://digiday.com/feed/", "priority": "high"},
+    {"name": "MediaPost - Online Media", "url": "https://www.mediapost.com/publications/rss/online-media-daily.xml", "priority": "medium"},
+    {"name": "MediaPost - Research", "url": "https://www.mediapost.com/publications/rss/research.xml", "priority": "medium"},
+
+    # Pillar 2: Advertising Strategy & Investment
+    {"name": "The Drum", "url": "https://www.thedrum.com/rss/news/all", "priority": "high"},
+    {"name": "MediaPost - Agency Daily", "url": "https://www.mediapost.com/publications/rss/agency-daily.xml", "priority": "high"},
+    {"name": "Search Engine Land", "url": "https://searchengineland.com/feed", "priority": "high"},
+    {"name": "MediaPost - Marketing Daily", "url": "https://www.mediapost.com/publications/rss/marketing-daily.xml", "priority": "medium"},
+    {"name": "AdAge - Brand Marketing", "url": "https://adage.com/section/brand-marketing/rss", "priority": "medium"},
+
+    # Pillar 3: Advertising Analytics & Automation
+    {"name": "MarTech", "url": "https://martech.org/feed/", "priority": "high"},
+    {"name": "MediaPost - Data & Targeting", "url": "https://www.mediapost.com/publications/rss/data-and-targeting-insider.xml", "priority": "high"},
+    {"name": "MediaPost - Social Media", "url": "https://www.mediapost.com/publications/rss/social-media-marketing-daily.xml", "priority": "medium"},
+    {"name": "MediaPost - Mobile", "url": "https://www.mediapost.com/publications/rss/mobile-marketing-daily.xml", "priority": "medium"},
+]
+
+RSS_CONFIG = {
+    "max_entries_per_feed": 20,
+    "max_age_hours": 48,
+    "use_high_priority_only": True,
+}
+
+# -------- RSS Fetching Functions --------
+def fetch_rss_candidates() -> List[Dict[str, Any]]:
+    """Fetch and parse RSS feeds, returning candidate articles"""
+    if not feedparser:
+        log.warning("feedparser not available, skipping RSS feeds")
+        return []
+
+    log.info("--- Fetching RSS Feed Candidates ---")
+    feeds = [f for f in RSS_FEEDS if f["priority"] == "high"] if RSS_CONFIG["use_high_priority_only"] else RSS_FEEDS
+    log.info(f"Using {len(feeds)} RSS feeds (high priority only: {RSS_CONFIG['use_high_priority_only']})")
+
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=RSS_CONFIG["max_age_hours"])
+    all_entries = []
+    seen_urls = set()
+    seen_titles = set()
+
+    for feed_info in feeds:
+        try:
+            feed = feedparser.parse(feed_info["url"])
+            if feed.bozo:
+                log.warning(f"Feed parsing warning for {feed_info['name']}: {feed.bozo_exception}")
+
+            for entry in feed.entries[:RSS_CONFIG["max_entries_per_feed"]]:
+                # Parse published date
+                published = None
+                if hasattr(entry, "published_parsed") and entry.published_parsed:
+                    try:
+                        published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+                    except Exception:
+                        pass
+
+                # Filter by age
+                if published and published < cutoff_time:
+                    continue
+
+                title = entry.get("title", "").strip()
+                link = entry.get("link", "").strip()
+
+                if not title or not link:
+                    continue
+
+                # Deduplicate by URL and title
+                if link in seen_urls:
+                    continue
+                normalized_title = title.lower().strip()
+                if normalized_title in seen_titles:
+                    continue
+
+                seen_urls.add(link)
+                seen_titles.add(normalized_title)
+
+                # Generate unique ID
+                entry_id = hashlib.md5(link.encode()).hexdigest()[:16]
+
+                all_entries.append({
+                    "id": entry_id,
+                    "title": title,
+                    "url": link,
+                    "source": feed_info["name"],
+                    "published": published.isoformat() if published else None,
+                })
+
+            log.info(f"✓ Fetched {len([e for e in all_entries if e['source'] == feed_info['name']])} from {feed_info['name']}")
+        except Exception as e:
+            log.error(f"Failed to fetch {feed_info['name']}: {e}")
+
+    # Sort by recency
+    all_entries.sort(
+        key=lambda e: e["published"] if e["published"] else "",
+        reverse=True
+    )
+
+    log.info(f"Total RSS entries fetched: {len(all_entries)}")
+    return all_entries
 
 # -------- JSON helpers --------
 def extract_json(s: str) -> Any:
@@ -510,48 +620,88 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
     return out
 
 def main():
-    parser = argparse.ArgumentParser(description="Melissa E-E-A-T Idea Factory v7.3 (Comms & Ad Focus)")
+    parser = argparse.ArgumentParser(description="Melissa E-E-A-T Idea Factory v8.0 (Advertising Investment Focus)")
     parser.add_argument("topic_or_url", nargs='?', default=None, help="Optional: A specific topic or URL to process.")
-    
+
     args = parser.parse_args()
 
     if args.topic_or_url:
         log.info(f"--- Running in MANUAL mode for: {args.topic_or_url} ---")
         run_idea_factory_stub(args.topic_or_url)
     else:
-        log.info("--- Running in AUTO-DISCOVERY mode ---")
-        candidates = fetch_and_filter_reddit_candidates()
-        
-        if not candidates:
-            log.info("No new posts passed the AI filter in this run. Exiting.")
+        log.info("--- Running in AUTO-DISCOVERY mode (Reddit + RSS) ---")
+
+        # 1. Fetch Reddit candidates
+        reddit_candidates = fetch_and_filter_reddit_candidates()
+        log.info(f"Reddit candidates after filter: {len(reddit_candidates)}")
+
+        # 2. Fetch RSS candidates
+        rss_entries = fetch_rss_candidates()
+
+        # 3. Run RSS entries through the same relevance filter
+        rss_candidates = []
+        for entry in rss_entries:
+            filter_result = agent_relevance_filter(entry["title"])
+            if filter_result and filter_result.get("is_good_candidate"):
+                # Add to candidates with ranking (pure AI score for RSS)
+                ai_relevance = filter_result.get("relevance_score", 0.0)
+                rss_candidates.append({
+                    "id": entry["id"],
+                    "title": entry["title"],
+                    "url": entry["url"],
+                    "score": 0,  # RSS doesn't have popularity score
+                    "subreddit": entry["source"],  # Use RSS source as "subreddit" for display
+                    "ranking_score": ai_relevance,  # Pure AI score
+                    "relevance_score": ai_relevance,
+                    "reason": filter_result.get("reason"),
+                    "source_type": "RSS"
+                })
+                log.info(f"  ✓ RSS Accepted: '{entry['source']}' - '{entry['title'][:60]}' (Score: {ai_relevance:.2f})")
+            else:
+                log.debug(f"  ✗ RSS Rejected: '{entry['source']}' - '{entry['title'][:60]}'")
+
+        log.info(f"RSS candidates after filter: {len(rss_candidates)}")
+
+        # 4. Combine all candidates
+        all_candidates = reddit_candidates + rss_candidates
+
+        if not all_candidates:
+            log.info("No candidates from Reddit or RSS passed the AI filter. Exiting.")
             return
 
+        # 5. Filter by minimum quality score
         final_selection = [
-            post for post in candidates 
+            post for post in all_candidates
             if post.get("ranking_score", 0) >= MIN_PROCESSING_SCORE
         ]
-        
+
         final_selection.sort(key=lambda x: x['ranking_score'], reverse=True)
-        
+
         if not final_selection:
             log.info(f"No posts met the minimum quality score of {MIN_PROCESSING_SCORE}. Exiting.")
             return
-            
-        log.info(f"Selected {len(final_selection)} posts that met the quality score for processing.")
-        
+
+        log.info(f"Selected {len(final_selection)} items for processing (Reddit: {len([p for p in final_selection if p.get('source_type') != 'RSS'])}, RSS: {len([p for p in final_selection if p.get('source_type') == 'RSS'])})")
+
+        # 6. Process each candidate
         for i, post in enumerate(final_selection):
-            log.info(f"\n{'='*25} PROCESSING POST {i+1}/{len(final_selection)} {'='*25}")
+            source_type = post.get("source_type", "Reddit")
+            log.info(f"\n{'='*25} PROCESSING {source_type} ITEM {i+1}/{len(final_selection)} {'='*25}")
+            log.info(f"Source: {post['subreddit']}")
             log.info(f"Title: {post['title']}")
             log.info(f"URL: {post['url']}")
-            log.info(f"Ranking Score: {post['ranking_score']:.2f} (Reddit: {post['score']}, AI: {post['relevance_score']:.2f})")
-            
+            if source_type == "Reddit":
+                log.info(f"Ranking Score: {post['ranking_score']:.2f} (Reddit: {post['score']}, AI: {post['relevance_score']:.2f})")
+            else:
+                log.info(f"Ranking Score: {post['ranking_score']:.2f} (AI: {post['relevance_score']:.2f})")
+
             try:
-                run_idea_factory_stub(post['url']) 
+                run_idea_factory_stub(post['url'])
                 save_processed_id(post['id'])
                 log.info(f"Successfully processed and saved ID: {post['id']}")
             except Exception as e:
-                log.error(f"PIPELINE FAILED for post '{post['title']}'. Error: {e}", exc_info=True)
-            
+                log.error(f"PIPELINE FAILED for '{post['title']}'. Error: {e}", exc_info=True)
+
             time.sleep(5)
             
     log.info("--- Pipeline run finished. ---")
