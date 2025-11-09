@@ -115,12 +115,12 @@ RSS_FEEDS = [
     # Pillar 2: Advertising Strategy & Investment
     {"name": "The Drum", "url": "https://www.thedrum.com/rss/news/all", "priority": "high"},
     {"name": "MediaPost - Agency Daily", "url": "https://www.mediapost.com/publications/rss/agency-daily.xml", "priority": "high"},
-    {"name": "Search Engine Land", "url": "https://searchengineland.com/feed", "priority": "high"},
+    # Removed Search Engine Land - too much SEO/organic content that gets filtered out
     {"name": "MediaPost - Marketing Daily", "url": "https://www.mediapost.com/publications/rss/marketing-daily.xml", "priority": "medium"},
     {"name": "AdAge - Brand Marketing", "url": "https://adage.com/section/brand-marketing/rss", "priority": "medium"},
 
     # Pillar 3: Advertising Analytics & Automation
-    {"name": "MarTech", "url": "https://martech.org/feed/", "priority": "high"},
+    # Removed MarTech - too general, not advertising-specific enough
     {"name": "MediaPost - Data & Targeting", "url": "https://www.mediapost.com/publications/rss/data-and-targeting-insider.xml", "priority": "high"},
     {"name": "MediaPost - Social Media", "url": "https://www.mediapost.com/publications/rss/social-media-marketing-daily.xml", "priority": "medium"},
     {"name": "MediaPost - Mobile", "url": "https://www.mediapost.com/publications/rss/mobile-marketing-daily.xml", "priority": "medium"},
