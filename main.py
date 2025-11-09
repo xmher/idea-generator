@@ -83,6 +83,9 @@ MODEL_MAP = {
 }
 API_MAX_RETRIES = 3
 
+# --- Discovery Time Window (Shared by Reddit & RSS) ---
+DISCOVERY_HOURS_WINDOW = 168  # 7 days - run weekly or a few times per week
+
 # --- Reddit Auto-Discovery Configuration ---
 SUBREDDIT_CONFIG = {
     # --- Pillar 1 & 2: Advertising Accountability & Strategy ---
@@ -99,7 +102,6 @@ SUBREDDIT_CONFIG = {
     "Automation": 100,        "fintech": 25,            "privacy": 100,
 }
 
-HOURS_WINDOW = 48  # Expanded from 24h to 48h to catch more posts
 MIN_PROCESSING_SCORE = 0.65  # Lowered from 0.70 to catch more good Reddit posts
 PROCESSED_IDS_FILE = "processed_posts.txt"
 
@@ -128,7 +130,6 @@ RSS_FEEDS = [
 
 RSS_CONFIG = {
     "max_entries_per_feed": 20,
-    "max_age_hours": 168,  # 7 days - RSS feeds don't update as frequently
     "use_high_priority_only": True,
 }
 
@@ -143,7 +144,7 @@ def fetch_rss_candidates() -> List[Dict[str, Any]]:
     feeds = [f for f in RSS_FEEDS if f["priority"] == "high"] if RSS_CONFIG["use_high_priority_only"] else RSS_FEEDS
     log.info(f"Using {len(feeds)} RSS feeds (high priority only: {RSS_CONFIG['use_high_priority_only']})")
 
-    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=RSS_CONFIG["max_age_hours"])
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=DISCOVERY_HOURS_WINDOW)
     all_entries = []
     seen_urls = set()
     seen_titles = set()
@@ -445,10 +446,10 @@ def fetch_and_filter_reddit_candidates() -> List[Dict[str, Any]]:
         log.error("Reddit client not initialized. Cannot fetch candidates.")
         return []
 
-    log.info("--- Starting Reddit Auto-Discovery (Comms & Ad Focus v7.3) ---")
+    log.info("--- Starting Reddit Auto-Discovery (Advertising Investment & Accountability v8.0) ---")
     raw_candidates = []
     processed_ids = load_processed_ids()
-    cutoff_ts = (datetime.now(timezone.utc) - timedelta(hours=HOURS_WINDOW)).timestamp()
+    cutoff_ts = (datetime.now(timezone.utc) - timedelta(hours=DISCOVERY_HOURS_WINDOW)).timestamp()
 
     log.info(f"Scanning {len(SUBREDDIT_CONFIG)} subreddits with dynamic thresholds...")
     for sub_name, min_score in SUBREDDIT_CONFIG.items():
