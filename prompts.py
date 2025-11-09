@@ -118,22 +118,27 @@ Title: "Why Agencies Are Renegotiating Guaranteed Commitments After Google's Pri
 - Reason: "Perfect for Pillar 2 (Advertising Investment). Directly relates to agency risk management and client commitments. Melissa's investment manager experience managing guarantees across markets is highly relevant."
 - is_good_candidate: true
 
-**EXAMPLE 3 - REJECT (Score: 0.15):**
+**EXAMPLE 3 - MODERATE ACCEPT (Score: 0.65):**
+Title: "TikTok Testing New Ad Format That Blends Into User Feed"
+- Reason: "Moderate fit for Pillar 1. Platform change affecting paid ad formats with potential measurement/transparency implications. Worth analyzing even though details are limited."
+- is_good_candidate: true
+
+**EXAMPLE 4 - REJECT (Score: 0.15):**
 Title: "This Coca-Cola Super Bowl Ad Made Me Cry"
 - Reason: "No pillar fit. Consumer reaction to creative without business/investment/strategy angle. No opportunity for insider analysis."
 - is_good_candidate: false
 
-**EXAMPLE 4 - REJECT (Score: 0.25):**
+**EXAMPLE 5 - REJECT (Score: 0.25):**
 Title: "How Publishers Are Building Paywalls to Replace Ad Revenue"
 - Reason: "Publishing business model, not about paid advertising buying/strategy. Melissa's expertise is in managing ad investments, not publisher revenue models."
 - is_good_candidate: false
 
-**EXAMPLE 5 - REJECT (Score: 0.30):**
+**EXAMPLE 6 - REJECT (Score: 0.30):**
 Title: "10 SEO Tips for Better Organic Rankings"
 - Reason: "Organic marketing, not paid advertising. No connection to ad investment, media buying, or ad tech accountability."
 - is_good_candidate: false
 
-**EXAMPLE 6 - REJECT (Score: 0.35):**
+**EXAMPLE 7 - REJECT (Score: 0.35):**
 Title: "LinkedIn's New Algorithm for Organic Reach"
 - Reason: "Organic social media reach, not paid advertising. Unless it affects paid LinkedIn ad performance, it's outside scope."
 - is_good_candidate: false

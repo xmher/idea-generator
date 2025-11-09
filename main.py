@@ -100,7 +100,7 @@ SUBREDDIT_CONFIG = {
 }
 
 HOURS_WINDOW = 24
-MIN_PROCESSING_SCORE = 0.70
+MIN_PROCESSING_SCORE = 0.65  # Lowered from 0.70 to catch more good Reddit posts
 PROCESSED_IDS_FILE = "processed_posts.txt"
 
 # --- RSS Feed Sources Configuration ---
@@ -477,12 +477,13 @@ def fetch_and_filter_reddit_candidates() -> List[Dict[str, Any]]:
     
     viable_candidates = []
     for post in raw_candidates:
-        filter_result = agent_relevance_filter(post["title"]) 
+        filter_result = agent_relevance_filter(post["title"])
         if filter_result:
             post.update(filter_result)
             ai_relevance = post.get("relevance_score", 0.0)
-            popularity = min(1.0, post['score'] / 3000) 
-            post["ranking_score"] = (ai_relevance * 0.9) + (popularity * 0.1)
+            popularity = min(1.0, post['score'] / 3000)
+            # Use AI relevance as primary signal, popularity as small bonus
+            post["ranking_score"] = min(1.0, ai_relevance + (popularity * 0.05))
             
             viable_candidates.append(post)
             log.info(f"  ✓ Accepted: 'r/{post['subreddit']}' - '{post['title'][:60]}' (Rank: {post['ranking_score']:.2f})")
