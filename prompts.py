@@ -37,12 +37,20 @@ NEW_PILLARS = """
 """
 
 NEW_FORMATS = """
-**PRIORITY TIER 1 (STRONGLY PREFERRED):**
-1.  **Investigative/Research Piece:** An "audit" of an industry claim, platform metric, or ad tech trend. Challenge assumptions, expose gaps, dig into the data. (e.g., "I Audited Meta's Attribution Claims—Here's What Doesn't Add Up")
-2.  **Knowledge/Thought Piece:** Expert analysis of industry news, platform changes, or strategic trends. Reveal hidden implications for advertisers, agencies, or auditors. (e.g., "Why Google's Privacy Update is Actually About Market Control")
+1.  **Investigative/Research Piece:** An "audit" of an industry claim, platform metric, or ad tech trend. Challenge assumptions, expose gaps, dig into the data.
+    - Example: "I Audited Meta's Attribution Claims—Here's What Doesn't Add Up"
+    - Example: "I Analyzed 100 TV Campaigns to Find the Real Cost of Poor Planning"
 
-**PRIORITY TIER 2 (RARELY USE - ONLY IF EXCEPTIONALLY ADVANCED):**
-3.  **Expert "How-To" Piece:** A practical guide for *other advertising professionals* on advanced tactics, tools, or models. Must be technical/strategic, NOT basic advice. (e.g., "The Excel Cost Analysis Model I Use to Evaluate Global Pitch Submissions" or "How I Automated 20 Hours of Advertising Reporting with Python/VBA")
+2.  **Opinion/Thought Piece:** Your expert take on industry news, platform changes, or strategic trends. Reveal hidden implications, challenge conventional wisdom, or make predictions.
+    - Example: "Why Google's Privacy Update is Actually About Market Control"
+    - Example: "Traditional Media Isn't Dead—Your Measurement Strategy Is"
+
+3.  **Expert How-To/Guide:** Practical guides for advertising professionals on tactics, tools, planning, or analysis. Can range from tactical (campaign planning) to technical (automation/analytics).
+    - Digital: "How to Audit Your Programmatic Campaign Data for Waste"
+    - Digital: "The Python Script I Use to Analyze Cross-Platform Performance"
+    - Traditional: "How to Plan a TV Campaign for Small Businesses"
+    - Traditional: "The Radio Buying Strategy Agencies Don't Want You to Know"
+    - Cross-Channel: "How I Built a Media Mix Model in Excel"
 """
 
 # ---------------------------------
@@ -204,29 +212,29 @@ For EACH angle, you must define:
 - **helpful_angle:** "[Investigative] I Audited Google's 'Transparency' Claims—Here's What They're Still Hiding"
 - **expert_persona:** "Melissa, writing from her media auditor experience at a global accountability firm."
 
-**Angle 2 (Agency Lens):**
+**Angle 2 (Agency Lens - Opinion):**
 - **pillar:** Advertising Strategy & Investment
-- **format:** Knowledge/Thought Piece
-- **helpful_angle:** "[Analysis] Why Google's Transparency Update Creates New Risk for Agency Holding Companies"
+- **format:** Opinion/Thought Piece
+- **helpful_angle:** "[Opinion] Why Google's Transparency Update Creates New Risk for Agency Holding Companies"
 - **expert_persona:** "Melissa, writing from her global investment management experience at a major agency network."
 
-**Angle 3 (In-House Lens):**
+**Angle 3 (In-House Lens - Digital How-To):**
 - **pillar:** Advertising Analytics & Automation
-- **format:** Expert "How-To" Piece
+- **format:** Expert How-To/Guide
 - **helpful_angle:** "[How-To] The Python Script I Built to Automate 20 Hours of Advertising Reporting Per Week"
 - **expert_persona:** "Melissa, writing from her in-house experience building advertising analytics automation using Python and SQL."
 
-**Angle 4 (Cross-Pillar Investigative):**
-- **pillar:** Media Accountability & Performance
-- **format:** Investigative/Research Piece
-- **helpful_angle:** "[Deep Dive] The Real Reason Platforms Announce 'Transparency' (Hint: It's Not Trust)"
-- **expert_persona:** "Melissa, synthesizing insights from all three roles: auditor, agency manager, and in-house analyst."
-
-**Angle 5 (Practical Strategy):**
+**Angle 4 (Traditional Media How-To):**
 - **pillar:** Advertising Strategy & Investment
-- **format:** Expert "How-To" Piece
-- **helpful_angle:** "[Professional Guide] How to Actually Hold Platforms Accountable (From Someone Who's Done It)"
-- **expert_persona:** "Melissa, drawing on her experience across auditing, agency negotiations, and in-house policy work."
+- **format:** Expert How-To/Guide
+- **helpful_angle:** "[Guide] How to Plan a TV Campaign When You're Not a Big Brand (From Someone Who's Audited Hundreds)"
+- **expert_persona:** "Melissa, writing from her media auditor and agency investment experience with traditional media buying across TV, Radio, and OOH."
+
+**Angle 5 (Cross-Pillar Opinion):**
+- **pillar:** Media Accountability & Performance
+- **format:** Opinion/Thought Piece
+- **helpful_angle:** "[Opinion] The Real Reason Platforms Announce 'Transparency' (Hint: It's Not Trust)"
+- **expert_persona:** "Melissa, synthesizing insights from all three roles: auditor, agency manager, and in-house analyst."
 
 ---
 
@@ -238,18 +246,14 @@ For EACH angle, you must define:
 3. **Professional Value** - Which would most help other advertising professionals?
 4. **Timeliness & Relevance** - Which is most relevant to current industry conversations?
 
-**Format Priority (CRITICAL):**
-- **TIER 1 (STRONGLY PREFER):** Investigative/Research OR Knowledge/Thought pieces
-- **TIER 2 (RARELY USE):** Expert How-Tos (ONLY if exceptionally advanced, technical, and advertising-specific)
-
 **Decision-Making Framework:**
-- ✅ **STRONGLY Choose:** Investigative pieces that audit claims, expose gaps, or challenge assumptions
-- ✅ **STRONGLY Choose:** Thought pieces that reveal hidden implications or insider perspectives
+- ✅ **Choose:** Investigative pieces that audit claims, expose gaps, or challenge assumptions
+- ✅ **Choose:** Opinion/thought pieces that reveal hidden implications or insider perspectives
+- ✅ **Choose:** How-To guides that leverage your unique experience (digital tactics, traditional media planning, analytics/automation)
 - ✅ **Choose:** Angles that leverage your unique cross-functional experience (auditor + agency + in-house)
-- ⚠️ **Rarely Choose:** How-Tos (only if it's something like "The Cost Analysis Model I Use for Pitch Evaluation" or "How I Automated Advertising Reporting with Python/SQL" - must be advanced and specific)
-- ❌ **Avoid:** Angles that anyone could write
-- ❌ **Avoid:** Angles that are purely reactive without deeper analysis
-- ❌ **Avoid:** How-Tos that are basic advice or tutorials
+- ✅ **Choose:** Traditional media How-Tos (TV, Radio, OOH, Cinema) - these are unique since most content focuses on digital
+- ❌ **Avoid:** Angles that anyone could write (generic advice, surface-level news reaction)
+- ❌ **Avoid:** Basic tutorials without insider insight
 
 ---
 
@@ -336,9 +340,15 @@ Provide findings in structured sections matching the requirements above. Include
     }},
     {{
       "pillar": "Advertising Strategy & Investment",
-      "format": "Knowledge/Thought Piece",
-      "helpful_angle": "[Analysis] Why Google's Transparency Update Creates New Risk for Agency Holding Companies",
+      "format": "Opinion/Thought Piece",
+      "helpful_angle": "[Opinion] Why Google's Transparency Update Creates New Risk for Agency Holding Companies",
       "expert_persona": "Melissa, writing from her global investment management experience at a major agency network."
+    }},
+    {{
+      "pillar": "Advertising Analytics & Automation",
+      "format": "Expert How-To/Guide",
+      "helpful_angle": "[How-To] The Python Script I Built to Automate Advertising Reporting",
+      "expert_persona": "Melissa, writing from her in-house experience building advertising analytics automation."
     }}
   ],
   "winning_angle": {{
