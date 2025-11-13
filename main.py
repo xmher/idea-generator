@@ -126,6 +126,12 @@ RSS_FEEDS = [
     {"name": "MediaPost - Data & Targeting", "url": "https://www.mediapost.com/publications/rss/data-and-targeting-insider.xml", "priority": "high"},
     {"name": "MediaPost - Social Media", "url": "https://www.mediapost.com/publications/rss/social-media-marketing-daily.xml", "priority": "medium"},
     {"name": "MediaPost - Mobile", "url": "https://www.mediapost.com/publications/rss/mobile-marketing-daily.xml", "priority": "medium"},
+
+    # Industry Research & Insights (Cross-Pillar)
+    {"name": "Think with Google", "url": "https://www.thinkwithgoogle.com/feed/", "priority": "high"},
+    {"name": "Meta for Business", "url": "https://www.facebook.com/business/news/rss/", "priority": "high"},
+    {"name": "IAB", "url": "https://www.iab.com/feed/", "priority": "medium"},
+    {"name": "eMarketer", "url": "https://www.emarketer.com/topics/rss", "priority": "medium"},
 ]
 
 RSS_CONFIG = {
@@ -207,6 +213,68 @@ def fetch_rss_candidates() -> List[Dict[str, Any]]:
 
     log.info(f"Total RSS entries fetched: {len(all_entries)}")
     return all_entries
+
+# -------- Manual Queue Functions --------
+MANUAL_QUEUE_FILE = "manual_queue.txt"
+
+def fetch_manual_queue_candidates() -> List[Dict[str, Any]]:
+    """Fetch candidates from manual queue file (one URL or topic per line)"""
+    if not os.path.exists(MANUAL_QUEUE_FILE):
+        # Create empty file with instructions
+        with open(MANUAL_QUEUE_FILE, 'w') as f:
+            f.write("# Manual Idea Queue - Add one URL or topic per line\n")
+            f.write("# Lines starting with # are ignored\n")
+            f.write("# After processing, entries will be commented out automatically\n\n")
+        log.info(f"Created {MANUAL_QUEUE_FILE}")
+        return []
+
+    log.info("--- Fetching Manual Queue Candidates ---")
+    candidates = []
+    lines_to_keep = []
+
+    with open(MANUAL_QUEUE_FILE, 'r') as f:
+        lines = f.readlines()
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Keep comments and empty lines as-is
+        if not stripped or stripped.startswith('#'):
+            lines_to_keep.append(line)
+            continue
+
+        # Process this entry
+        entry_id = f"manual_{hash(stripped) & 0xFFFFFFFF:08x}"
+
+        # Determine if it's a URL or just a topic
+        if stripped.startswith('http://') or stripped.startswith('https://'):
+            url = stripped
+            title = stripped  # Will extract title when fetching
+        else:
+            # It's a topic, not a URL
+            url = None
+            title = stripped
+
+        candidates.append({
+            "id": entry_id,
+            "title": title,
+            "url": url,
+            "source": "Manual Queue",
+            "published": datetime.now(timezone.utc).isoformat(),
+        })
+
+        # Comment out this line (mark as processed)
+        lines_to_keep.append(f"# [PROCESSED] {stripped}\n")
+
+    # Write back the file with processed entries commented out
+    if candidates:
+        with open(MANUAL_QUEUE_FILE, 'w') as f:
+            f.writelines(lines_to_keep)
+        log.info(f"✓ Fetched {len(candidates)} from Manual Queue (entries marked as processed)")
+    else:
+        log.info("No entries in manual queue")
+
+    return candidates
 
 # -------- JSON helpers --------
 def extract_json(s: str) -> Any:
@@ -664,11 +732,38 @@ def main():
 
         log.info(f"RSS candidates after filter: {len(rss_candidates)}")
 
+        # 3b. Fetch Manual Queue candidates
+        manual_entries = fetch_manual_queue_candidates()
+
+        # 3c. Run Manual Queue entries through the same relevance filter
+        manual_candidates = []
+        for entry in manual_entries:
+            filter_result = agent_relevance_filter(entry["title"])
+            if filter_result and filter_result.get("is_good_candidate"):
+                # Add to candidates with ranking (pure AI score for manual)
+                ai_relevance = filter_result.get("relevance_score", 0.0)
+                manual_candidates.append({
+                    "id": entry["id"],
+                    "title": entry["title"],
+                    "url": entry["url"] if entry["url"] else f"manual_topic_{entry['id']}",
+                    "score": 0,  # Manual doesn't have popularity score
+                    "subreddit": "Manual Queue",  # Use "Manual Queue" as source
+                    "ranking_score": ai_relevance,  # Pure AI score
+                    "relevance_score": ai_relevance,
+                    "reason": filter_result.get("reason"),
+                    "source_type": "Manual"
+                })
+                log.info(f"  ✓ Manual Accepted: '{entry['title'][:60]}' (Score: {ai_relevance:.2f})")
+            else:
+                log.debug(f"  ✗ Manual Rejected: '{entry['title'][:60]}'")
+
+        log.info(f"Manual Queue candidates after filter: {len(manual_candidates)}")
+
         # 4. Combine all candidates
-        all_candidates = reddit_candidates + rss_candidates
+        all_candidates = reddit_candidates + rss_candidates + manual_candidates
 
         if not all_candidates:
-            log.info("No candidates from Reddit or RSS passed the AI filter. Exiting.")
+            log.info("No candidates from Reddit, RSS, or Manual Queue passed the AI filter. Exiting.")
             return
 
         # 5. Filter by minimum quality score
