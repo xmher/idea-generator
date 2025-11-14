@@ -50,6 +50,13 @@ NEW_FORMATS = """
     - Craft: "Balancing Fantasy Plot and Romance Arc (Without Sacrificing Either)"
     - Market: "How to Position Your Romantasy in a Saturated Market"
     - Technique: "Writing Morally Grey Love Interests Readers Will Actually Root For"
+
+4.  **Reader Roundup/Community Insight:** Fun, reader-focused content based on what the romantasy community is saying—trends, preferences, hot takes, excitement, complaints.
+    - Example: "Romantasy Tropes Readers Are Completely Over (According to Reddit)"
+    - Example: "What Romantasy Readers Are Most Excited For in 2025"
+    - Example: "The Most Controversial Takes in r/RomanceBooks Right Now"
+    - Example: "Red Flags That Make Romantasy Readers DNF a Book"
+    - Example: "Underrated Romantasy Tropes Readers Want More Of"
 """
 
 # ---------------------------------
@@ -77,6 +84,7 @@ Ask yourself: Can we provide actionable romantasy writing insights on this topic
 - Market trends: what's selling in romantasy, BookTok trends, emerging tropes, saturated tropes, debut successes
 - Publishing paths for romantasy: trad vs indie, agent preferences, what editors are acquiring, comp titles
 - Reader preferences: what romantasy readers want, heat level trends, emotional beats, trope evolution
+- Reader community discussions: what readers love/hate, tropes they're tired of, what they're excited for, DNF triggers, controversial opinions
 - Romantasy news: book releases, author deals, genre controversies, representation discussions
 - Successful romantasy books/authors: craft analysis of Fourth Wing, ACOTAR, From Blood and Ash, etc.
 

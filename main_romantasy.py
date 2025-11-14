@@ -90,6 +90,8 @@ DISCOVERY_HOURS_WINDOW = 168  # 7 days - run weekly or a few times per week
 SUBREDDIT_CONFIG = {
     # --- Pillar 1: Romantasy Craft & Structure ---
     "RomanceBooks": 50,           # Romance readers discussing tropes and books
+    "romantasy": 25,              # Romantasy-specific community
+    "fantasyromance": 25,         # Fantasy romance community
     "Fantasy": 75,                # Fantasy craft and worldbuilding
     "fantasywriters": 25,         # Fantasy writing craft
     "RomanceAuthors": 10,         # Romance author community
