@@ -1,5 +1,5 @@
-# main.py
-# VERSION 8.0: "Melissa" E-E-A-T Idea Factory (Advertising Investment & Accountability Focus)
+# main_romantasy.py
+# VERSION 1.0: Romantasy Writing Advice Blog - Idea Generator
 # Integrated RSS feeds + Reddit auto-discovery with shared relevance filtering
 
 import os, re, json, argparse, logging, time, hashlib
@@ -30,7 +30,7 @@ except ImportError:
     feedparser = None
     print("WARNING: Missing 'feedparser' library. RSS feeds unavailable. Install with 'pip install feedparser'.")
 
-import prompts as P
+import prompts_romantasy as P
 
 # ---------- Logging ----------
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -88,50 +88,53 @@ DISCOVERY_HOURS_WINDOW = 168  # 7 days - run weekly or a few times per week
 
 # --- Reddit Auto-Discovery Configuration ---
 SUBREDDIT_CONFIG = {
-    # --- Pillar 1 & 2: Advertising Accountability & Strategy ---
-    "adops": 10,              "adtech": 5,              "advertising": 50,
-    "PPC": 50,                "marketing": 100,         "socialmedia": 50,
-    "digital_marketing": 75,  "SEO": 100,
-    "BusinessOfMedia": 5,     "publishing": 25,         "agency": 25,
-    "strategy": 10,           "branding": 50,
+    # --- Pillar 1: Romantasy Craft & Structure ---
+    "RomanceBooks": 50,           # Romance readers discussing tropes and books
+    "Fantasy": 75,                # Fantasy craft and worldbuilding
+    "fantasywriters": 25,         # Fantasy writing craft
+    "RomanceAuthors": 10,         # Romance author community
 
-    # --- Pillar 3: Media Analysis, AI & Automation ---
-    "datascience": 100,       "martech": 25,
-    "PublicRelations": 40,    "TechSEO": 10,
-    "learnpython": 50,        "MachineLearning": 100,
-    "Automation": 100,        "fintech": 25,            "privacy": 100,
+    # --- Pillar 2: Market Trends & Publishing ---
+    "YAwriters": 50,              # YA (includes romantasy) writing community
+    "selfpublish": 50,            # Self-publishing trends and strategies
+    "PubTips": 25,                # Traditional publishing queries/deals
+    "BookTok": 50,                # BookTok trends
+
+    # --- Pillar 3: Reader Psychology & Audience ---
+    "romancelandia": 25,          # Romance reader community
+    "suggestmeabook": 75,         # What readers are asking for
+    "booksuggestions": 75,        # Reader preferences
+    "YAlit": 50,                  # YA reader community
+
+    # --- Cross-Pillar: Writing & Genre ---
+    "writing": 100,               # General writing community
+    "writers": 100,               # Writer discussions
 }
 
 MIN_PROCESSING_SCORE = 0.65  # Lowered from 0.70 to catch more good Reddit posts
-PROCESSED_IDS_FILE = "processed_posts.txt"
+PROCESSED_IDS_FILE = "processed_posts_romantasy.txt"
 
 # --- RSS Feed Sources Configuration ---
 RSS_FEEDS = [
-    # Pillar 1: Media Accountability & Performance
-    {"name": "AdExchanger", "url": "https://adexchanger.com/feed/", "priority": "high"},
-    {"name": "AdAge", "url": "https://adage.com/rss-feed", "priority": "high"},
-    {"name": "Digiday", "url": "https://digiday.com/feed/", "priority": "high"},
-    {"name": "MediaPost - Online Media", "url": "https://www.mediapost.com/publications/rss/online-media-daily.xml", "priority": "medium"},
-    {"name": "MediaPost - Research", "url": "https://www.mediapost.com/publications/rss/research.xml", "priority": "medium"},
+    # Pillar 1: Romantasy Craft & Structure
+    {"name": "Jane Friedman", "url": "https://www.janefriedman.com/feed/", "priority": "high"},
+    {"name": "Writer's Digest", "url": "https://www.writersdigest.com/feed", "priority": "high"},
+    {"name": "DIY MFA", "url": "https://diymfa.com/feed", "priority": "medium"},
 
-    # Pillar 2: Advertising Strategy & Investment
-    {"name": "The Drum", "url": "https://www.thedrum.com/rss/news/all", "priority": "high"},
-    {"name": "MediaPost - Agency Daily", "url": "https://www.mediapost.com/publications/rss/agency-daily.xml", "priority": "high"},
-    # Removed Search Engine Land - too much SEO/organic content that gets filtered out
-    {"name": "MediaPost - Marketing Daily", "url": "https://www.mediapost.com/publications/rss/marketing-daily.xml", "priority": "medium"},
-    {"name": "AdAge - Brand Marketing", "url": "https://adage.com/section/brand-marketing/rss", "priority": "medium"},
+    # Pillar 2: Market Trends & Publishing
+    {"name": "Publishers Weekly", "url": "https://www.publishersweekly.com/pw/feeds/recent/index.xml", "priority": "high"},
+    {"name": "The Passive Voice", "url": "https://www.thepassivevoice.com/feed/", "priority": "high"},
+    {"name": "Publishers Marketplace", "url": "https://lunch.publishersmarketplace.com/feed/", "priority": "medium"},
+    {"name": "Kirkus Reviews", "url": "https://www.kirkusreviews.com/feeds/reviews/", "priority": "medium"},
 
-    # Pillar 3: Advertising Analytics & Automation
-    # Removed MarTech - too general, not advertising-specific enough
-    {"name": "MediaPost - Data & Targeting", "url": "https://www.mediapost.com/publications/rss/data-and-targeting-insider.xml", "priority": "high"},
-    {"name": "MediaPost - Social Media", "url": "https://www.mediapost.com/publications/rss/social-media-marketing-daily.xml", "priority": "medium"},
-    {"name": "MediaPost - Mobile", "url": "https://www.mediapost.com/publications/rss/mobile-marketing-daily.xml", "priority": "medium"},
+    # Pillar 3: Reader Psychology & Genre Trends
+    {"name": "BookRiot", "url": "https://bookriot.com/feed/", "priority": "high"},
+    {"name": "Smart Bitches Trashy Books", "url": "https://smartbitchestrashybooks.com/feed/", "priority": "high"},
+    {"name": "Dear Author", "url": "https://dearauthor.com/feed/", "priority": "medium"},
 
-    # Industry Research & Insights (Cross-Pillar)
-    {"name": "Think with Google", "url": "https://www.thinkwithgoogle.com/feed/", "priority": "high"},
-    {"name": "Meta for Business", "url": "https://www.facebook.com/business/news/rss/", "priority": "high"},
-    {"name": "IAB", "url": "https://www.iab.com/feed/", "priority": "medium"},
-    {"name": "eMarketer", "url": "https://www.emarketer.com/topics/rss", "priority": "medium"},
+    # Writing Craft & Industry (Cross-Pillar)
+    {"name": "Chuck Wendig", "url": "https://terribleminds.com/ramble/feed/", "priority": "medium"},
+    {"name": "Helping Writers Become Authors", "url": "https://www.helpingwritersbecomeauthors.com/feed/", "priority": "medium"},
 ]
 
 RSS_CONFIG = {
@@ -215,7 +218,7 @@ def fetch_rss_candidates() -> List[Dict[str, Any]]:
     return all_entries
 
 # -------- Manual Queue Functions --------
-MANUAL_QUEUE_FILE = "manual_queue.txt"
+MANUAL_QUEUE_FILE = "manual_queue_romantasy.txt"
 
 def fetch_manual_queue_candidates() -> List[Dict[str, Any]]:
     """Fetch candidates from manual queue file (one URL or topic per line)"""
