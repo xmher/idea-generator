@@ -45,11 +45,11 @@ NEW_FORMATS = """
     - Example: "BookTok Ruined the Slow Burn (Here's Why That's Actually Good)"
     - Example: "We Need to Talk About Romantasy's Worldbuilding Problem"
 
-3.  **Craft Guide/How-To:** Practical writing advice specific to romantasy—how to execute tropes, structure romance+fantasy plots, create compelling worldbuilding, etc.
-    - Craft: "How to Write a Fated Mates Romance That Doesn't Feel Inevitable"
-    - Craft: "Balancing Fantasy Plot and Romance Arc (Without Sacrificing Either)"
-    - Market: "How to Position Your Romantasy in a Saturated Market"
-    - Technique: "Writing Morally Grey Love Interests Readers Will Actually Root For"
+3.  **Craft Guide/How-To:** Practical writing advice specific to romantasy. Can be SHORT and tactical or longer and comprehensive.
+    - Short: "5 Ways to Make Your Magic System Feel Romantic"
+    - Short: "The Quick Fix for Flat Fantasy Worldbuilding"
+    - Comprehensive: "How to Write a Fated Mates Romance That Doesn't Feel Inevitable"
+    - Comprehensive: "Balancing Fantasy Plot and Romance Arc (Without Sacrificing Either)"
 
 4.  **Reader Roundup/Community Insight:** Fun, reader-focused content based on what the romantasy community is saying—trends, preferences, hot takes, excitement, complaints.
     - Example: "Romantasy Tropes Readers Are Completely Over (According to Reddit)"
@@ -337,6 +337,40 @@ Provide findings in structured sections matching the requirements above. Include
 ```
 
 ---
+
+## PART 4: EVALUATE FREE GUIDE OPPORTUNITY (OPTIONAL)
+
+**CRITICAL: Only generate a free guide idea if it would genuinely add value as a newsletter lead magnet.**
+
+Ask yourself:
+- Would this article naturally lend itself to a practical, downloadable resource?
+- Would a checklist, template, worksheet, or reference guide enhance the article topic?
+- Is there a clear "takeaway" that readers would exchange their email for?
+
+**DO suggest a free guide for:**
+- How-To articles (checklists, templates, step-by-step worksheets)
+- Analysis pieces with actionable frameworks (comparison charts, decision trees, trope breakdown sheets)
+- Reader Roundup articles (downloadable lists, printable reference guides)
+
+**DO NOT suggest a free guide for:**
+- Opinion pieces without actionable components
+- News/trend commentary that's purely informational
+- Topics where a guide would feel forced or redundant
+
+**Free Guide Format Examples:**
+- "Romantasy Trope Checklist: 25 Reader Favorites to Consider"
+- "The Romance-Fantasy Plot Balance Worksheet"
+- "Morally Grey Character Development Template"
+- "BookTok Trends Quick Reference Guide (2025)"
+- "Reader Red Flags Checklist: What to Avoid in Your Romantasy"
+
+If a guide makes sense, include these fields in your JSON output:
+- **free_guide_idea**: A short, compelling title for the downloadable guide
+- **free_guide_description**: 1-2 sentences explaining what's in the guide and why readers would want it
+
+If a guide does NOT make sense, set both fields to null.
+
+---
 **FINAL OUTPUT (Return ONLY this JSON):**
 
 {{
@@ -366,6 +400,13 @@ Provide findings in structured sections matching the requirements above. Include
       "helpful_angle": "[Analysis] I Studied 50 Bestselling Romantasy Books—Here's How They Actually Balance Two Plots Without Sacrificing Either",
       "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution."
   }},
-  "deep_research_prompt": "[Insert the complete, detailed research prompt following the template above. Make it specific to the winning angle, filling in all bracketed placeholders with actual content from the winning angle. For example: studying 50 bestselling romantasy books, analyzing pacing patterns, examining how authors structure romance arcs within fantasy adventures, identifying what makes successful dual-plot romantasy work, etc.]"
+  "deep_research_prompt": "[Insert the complete, detailed research prompt following the template above. Make it specific to the winning angle, filling in all bracketed placeholders with actual content from the winning angle.]",
+  "free_guide_idea": "The Dual-Plot Balance Worksheet for Romantasy Writers",
+  "free_guide_description": "A practical worksheet to help you map out your romance arc and fantasy plot side-by-side, with checkpoints to ensure neither plot dominates. Includes examples from bestselling romantasy books showing how they balanced both storylines."
 }}
+
+**NOTE ON FREE GUIDE:**
+- If the winning angle would benefit from a free guide, provide the guide idea and description as shown above
+- If NOT, use: "free_guide_idea": null, "free_guide_description": null
+- Example (opinion piece with no actionable guide): {{"free_guide_idea": null, "free_guide_description": null}}
 """ # <-- .format() call removed

@@ -608,12 +608,12 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
     
     # 2) Category
     pillar_to_category = {
-        "Media Accountability & Performance": "Media Accountability",
-        "Advertising Strategy & Investment": "Ad Strategy",
-        "Media Analysis, AI & Automation": "Ad-Tech & AI",
+        "Romantasy Craft & Structure": "Craft & Writing",
+        "Market Trends & Publishing": "Publishing & Market",
+        "Reader Psychology & Audience": "Reader Psychology",
     }
-    pillar_name = winning_angle.get("pillar", "Ad Strategy")
-    out["category_name"] = pillar_to_category.get(pillar_name, "Ad Strategy")
+    pillar_name = winning_angle.get("pillar", "Craft & Writing")
+    out["category_name"] = pillar_to_category.get(pillar_name, "Craft & Writing")
     log.info(f"→ Pillar-based Category: {out['category_name']}")
     
     # 3) Save & Publish STUB
@@ -652,7 +652,7 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
         
         dev_notes_html = f"""
 <details open>
-    <summary><strong>Generation &amp; Angle Analysis (Advertising E-E-A-T)</strong></summary>
+    <summary><strong>Generation &amp; Angle Analysis (Romantasy Writing Advice)</strong></summary>
     
     <p><strong>Original Source:</strong> <a href="{out['input']}" target="_blank" rel="noopener noreferrer">{escape(out['topic'])}</a></p>
     
@@ -663,9 +663,25 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
 
     <h3>Deep Research Prompt (Copy This)</h3>
     <textarea readonly style="width:100%; min-height:400px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #ccc; border-radius:4px;">{research_prompt_escaped}</textarea>
-    
-    <hr />
-    
+
+    <hr />"""
+
+        # Add free guide section if present
+        free_guide_idea = out.get('free_guide_idea')
+        free_guide_description = out.get('free_guide_description')
+
+        if free_guide_idea and free_guide_description:
+            dev_notes_html += f"""
+
+    <h3>💎 Free Guide Idea (Newsletter Lead Magnet)</h3>
+    <p><strong>Guide Title:</strong> {escape(free_guide_idea)}</p>
+    <p><strong>Description:</strong> {escape(free_guide_description)}</p>
+    <p style="color:#666; font-size:0.9em;"><em>This downloadable guide can be offered in exchange for email signups.</em></p>
+
+    <hr />"""
+
+        dev_notes_html += f"""
+
     <h3>All Angles Considered:</h3>
     <pre style="background-color:#f5f5f5; border:1px solid #ccc; padding:10px; border-radius:4px; white-space: pre-wrap; word-wrap: break-word;">{angles_json}</pre>
 
