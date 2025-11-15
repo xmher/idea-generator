@@ -689,6 +689,108 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
     log.info("="*69)
     return out
 
+def generate_newsletter(all_candidates: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Generate a weekly newsletter from discovered content"""
+    log.info("=" * 80)
+    log.info("🗞️  GENERATING WEEKLY NEWSLETTER")
+    log.info("=" * 80)
+
+    if not all_candidates:
+        log.warning("No content available for newsletter generation")
+        return {}
+
+    # Format content for the newsletter prompt
+    content_list = []
+    for i, item in enumerate(all_candidates[:20], 1):  # Top 20 items
+        source_type = item.get('source_type', 'Reddit')
+        source = item.get('subreddit', 'Unknown')
+        content_list.append(
+            f"{i}. **{item['title']}**\n"
+            f"   Source: {source} ({source_type})\n"
+            f"   URL: {item['url']}\n"
+            f"   Relevance Score: {item.get('relevance_score', 0):.2f}\n"
+            f"   Why relevant: {item.get('reason', 'N/A')}\n"
+        )
+
+    weekly_content = "\n".join(content_list)
+
+    # Generate newsletter
+    newsletter_prompt = P.NEWSLETTER_GENERATOR_PROMPT.format(weekly_content=weekly_content)
+    newsletter_result = call("angle_and_plan", newsletter_prompt)  # Reuse the same model
+
+    newsletter = _expect_dict(newsletter_result, "Newsletter Generation")
+
+    # Print newsletter to console
+    print("\n" + "=" * 80)
+    print("📧 THE VIRAL EDIT - WEEKLY ADVERTISING ROUNDUP")
+    print("=" * 80)
+    print(f"\n📬 Subject: {newsletter.get('subject_line', 'N/A')}\n")
+
+    print("-" * 80)
+    print("OPENING")
+    print("-" * 80)
+    print(newsletter.get('opening', 'N/A'))
+
+    lead = newsletter.get('lead_story', {})
+    print("\n" + "-" * 80)
+    print(f"LEAD STORY: {lead.get('headline', 'N/A')}")
+    print("-" * 80)
+    print(lead.get('content', 'N/A'))
+    if lead.get('data_viz_suggestion'):
+        print(f"\n💡 Data Viz Idea: {lead['data_viz_suggestion']}")
+
+    quick_hits = newsletter.get('quick_hits', [])
+    if quick_hits:
+        print("\n" + "-" * 80)
+        print("BUT WAIT, THERE'S MORE!")
+        print("-" * 80)
+        for hit in quick_hits:
+            print(f"\n• **{hit.get('headline', 'N/A')}**")
+            print(f"  {hit.get('summary', 'N/A')}")
+            if hit.get('source'):
+                print(f"  [{hit['source']}]")
+
+    stat = newsletter.get('stat_of_week', {})
+    if stat:
+        print("\n" + "-" * 80)
+        print("📊 BY THE NUMBERS")
+        print("-" * 80)
+        print(f"\n{stat.get('number', 'N/A')}")
+        print(stat.get('context', 'N/A'))
+        print(stat.get('implication', 'N/A'))
+
+    quote = newsletter.get('quote_of_week', {})
+    if quote and quote.get('quote'):
+        print("\n" + "-" * 80)
+        print("💬 QUOTE THAT HIT DIFFERENT")
+        print("-" * 80)
+        print(f'"{quote.get("quote", "N/A")}"')
+        print(f"– {quote.get('attribution', 'N/A')}")
+        print(f"\n{quote.get('context', 'N/A')}")
+
+    print("\n" + "-" * 80)
+    print("CLOSING")
+    print("-" * 80)
+    print(newsletter.get('closing', 'N/A'))
+
+    print("\n" + "-" * 80)
+    print("CALL TO ACTION")
+    print("-" * 80)
+    print(newsletter.get('cta', 'N/A'))
+
+    print("\n" + "=" * 80)
+
+    # Save newsletter to file
+    fname = f"NEWSLETTER_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    try:
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(newsletter, f, indent=2)
+        log.info(f"✓ Newsletter saved: {fname}")
+    except Exception as e:
+        log.error(f"Failed to save newsletter: {e}")
+
+    return newsletter
+
 def main():
     parser = argparse.ArgumentParser(description="Melissa E-E-A-T Idea Factory v8.0 (Advertising Investment Focus)")
     parser.add_argument("topic_or_url", nargs='?', default=None, help="Optional: A specific topic or URL to process.")
@@ -765,6 +867,12 @@ def main():
         if not all_candidates:
             log.info("No candidates from Reddit, RSS, or Manual Queue passed the AI filter. Exiting.")
             return
+
+        # 4b. Generate Weekly Newsletter from all candidates
+        log.info(f"\n{'='*80}")
+        log.info(f"Generating newsletter from {len(all_candidates)} discovered items...")
+        log.info(f"{'='*80}\n")
+        generate_newsletter(all_candidates)
 
         # 5. Filter by minimum quality score
         final_selection = [
