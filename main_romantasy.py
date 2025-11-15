@@ -630,83 +630,49 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
         log.info(f"→ Idea packet saved: {fname}")
     except Exception as e:
         log.error(f"Failed to save local JSON file: {e}")
-    
-    if WP_URL and WP_USERNAME and WP_APP_PASSWORD:
-        log.info("--- Publishing IDEA STUB to WordPress ---")
-        
-        try:
-            import html
-            escape = html.escape
-        except ImportError:
-            log.warning("html module not found. Will not escape <pre> content.")
-            escape = lambda s: s 
 
-        angles_json = escape(json.dumps(out.get('all_angles', []), indent=2))
-        winning_angle_html = f"""
-    <p><strong>Pillar:</strong> {escape(winning_angle.get('pillar', 'N/A'))}</p>
-    <p><strong>Format:</strong> {escape(winning_angle.get('format', 'N/A'))}</p>
-    <p><strong>Angle:</strong> {escape(winning_angle.get('helpful_angle', 'N/A'))}</p>
-    <p><strong>Persona:</strong> {escape(winning_angle.get('expert_persona', 'N/A'))}</p>
-"""
-        research_prompt_escaped = escape(out.get('deep_research_prompt', 'Error: Prompt not generated.'))
-        
-        dev_notes_html = f"""
-<details open>
-    <summary><strong>Generation &amp; Angle Analysis (Romantasy Writing Advice)</strong></summary>
-    
-    <p><strong>Original Source:</strong> <a href="{out['input']}" target="_blank" rel="noopener noreferrer">{escape(out['topic'])}</a></p>
-    
-    <h3>Winning Angle:</h3>
-    {winning_angle_html}
+    # Print output to console instead of WordPress
+    log.info("=" * 80)
+    log.info("✓ ROMANTASY WRITING ADVICE IDEA GENERATED")
+    log.info("=" * 80)
 
-    <hr />
+    print("\n" + "=" * 80)
+    print("🎯 WINNING ANGLE")
+    print("=" * 80)
+    print(f"Pillar: {winning_angle.get('pillar', 'N/A')}")
+    print(f"Format: {winning_angle.get('format', 'N/A')}")
+    print(f"Angle: {winning_angle.get('helpful_angle', 'N/A')}")
+    print(f"Persona: {winning_angle.get('expert_persona', 'N/A')}")
 
-    <h3>Deep Research Prompt (Copy This)</h3>
-    <textarea readonly style="width:100%; min-height:400px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #ccc; border-radius:4px;">{research_prompt_escaped}</textarea>
+    # Free guide section (if present)
+    free_guide_idea = out.get('free_guide_idea')
+    free_guide_description = out.get('free_guide_description')
 
-    <hr />"""
+    if free_guide_idea and free_guide_description:
+        print("\n" + "=" * 80)
+        print("💎 FREE GUIDE IDEA (Newsletter Lead Magnet)")
+        print("=" * 80)
+        print(f"Title: {free_guide_idea}")
+        print(f"Description: {free_guide_description}")
 
-        # Add free guide section if present
-        free_guide_idea = out.get('free_guide_idea')
-        free_guide_description = out.get('free_guide_description')
+    # Deep research prompt
+    print("\n" + "=" * 80)
+    print("📚 DEEP RESEARCH PROMPT")
+    print("=" * 80)
+    print(out.get('deep_research_prompt', 'Error: Prompt not generated.'))
 
-        if free_guide_idea and free_guide_description:
-            dev_notes_html += f"""
+    # All angles considered
+    print("\n" + "=" * 80)
+    print("💡 ALL ANGLES CONSIDERED")
+    print("=" * 80)
+    for i, angle in enumerate(out.get('all_angles', []), 1):
+        print(f"\nAngle {i}:")
+        print(f"  Pillar: {angle.get('pillar')}")
+        print(f"  Format: {angle.get('format')}")
+        print(f"  Angle: {angle.get('helpful_angle')}")
 
-    <h3>💎 Free Guide Idea (Newsletter Lead Magnet)</h3>
-    <p><strong>Guide Title:</strong> {escape(free_guide_idea)}</p>
-    <p><strong>Description:</strong> {escape(free_guide_description)}</p>
-    <p style="color:#666; font-size:0.9em;"><em>This downloadable guide can be offered in exchange for email signups.</em></p>
-
-    <hr />"""
-
-        dev_notes_html += f"""
-
-    <h3>All Angles Considered:</h3>
-    <pre style="background-color:#f5f5f5; border:1px solid #ccc; padding:10px; border-radius:4px; white-space: pre-wrap; word-wrap: break-word;">{angles_json}</pre>
-
-</details>
-"""
-        
-        post_title = f"[IDEA] {winning_angle.get('helpful_angle', out.get('topic', 'New Post Idea'))}"
-        excerpt = f"Pillar: {winning_angle.get('pillar', 'N/A')} | Format: {winning_angle.get('format', 'N/A')}"
-        
-        wp_post = publish_to_wordpress(
-            title=post_title,
-            content_html=dev_notes_html,
-            slug=f"idea-{slug_base}",
-            excerpt=excerpt,
-            seo_pack={"title": post_title, "meta_description": excerpt},
-            categories=[out.get("category_name", "Ad Strategy")]
-        )
-        out["wordpress"] = {
-            "id": wp_post.get("id"),
-            "link": wp_post.get("link"),
-            "status": wp_post.get("status")
-        }
-    
-    log.info("="*69)
-    log.info("✓ ADVERTISING E-E-A-T IDEA STUB GENERATED")
+    print("\n" + "=" * 80)
+    log.info(f"Idea saved to: {fname}")
     log.info("="*69)
     return out
 
