@@ -1,5 +1,5 @@
-# main.py
-# VERSION 8.0: "Melissa" E-E-A-T Idea Factory (Advertising Investment & Accountability Focus)
+# main_romantasy.py
+# VERSION 1.0: Romantasy Writing Advice Blog - Idea Generator
 # Integrated RSS feeds + Reddit auto-discovery with shared relevance filtering
 
 import os, re, json, argparse, logging, time, hashlib
@@ -30,7 +30,7 @@ except ImportError:
     feedparser = None
     print("WARNING: Missing 'feedparser' library. RSS feeds unavailable. Install with 'pip install feedparser'.")
 
-import prompts as P
+import prompts_romantasy as P
 
 # ---------- Logging ----------
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -88,50 +88,55 @@ DISCOVERY_HOURS_WINDOW = 168  # 7 days - run weekly or a few times per week
 
 # --- Reddit Auto-Discovery Configuration ---
 SUBREDDIT_CONFIG = {
-    # --- Pillar 1 & 2: Advertising Accountability & Strategy ---
-    "adops": 10,              "adtech": 5,              "advertising": 50,
-    "PPC": 50,                "marketing": 100,         "socialmedia": 50,
-    "digital_marketing": 75,  "SEO": 100,
-    "BusinessOfMedia": 5,     "publishing": 25,         "agency": 25,
-    "strategy": 10,           "branding": 50,
+    # --- Pillar 1: Romantasy Craft & Structure ---
+    "RomanceBooks": 50,           # Romance readers discussing tropes and books
+    "romantasy": 25,              # Romantasy-specific community
+    "fantasyromance": 25,         # Fantasy romance community
+    "Fantasy": 75,                # Fantasy craft and worldbuilding
+    "fantasywriters": 25,         # Fantasy writing craft
+    "RomanceAuthors": 10,         # Romance author community
 
-    # --- Pillar 3: Media Analysis, AI & Automation ---
-    "datascience": 100,       "martech": 25,
-    "PublicRelations": 40,    "TechSEO": 10,
-    "learnpython": 50,        "MachineLearning": 100,
-    "Automation": 100,        "fintech": 25,            "privacy": 100,
+    # --- Pillar 2: Market Trends & Publishing ---
+    "YAwriters": 50,              # YA (includes romantasy) writing community
+    "selfpublish": 50,            # Self-publishing trends and strategies
+    "PubTips": 25,                # Traditional publishing queries/deals
+    "BookTok": 50,                # BookTok trends
+
+    # --- Pillar 3: Reader Psychology & Audience ---
+    "romancelandia": 25,          # Romance reader community
+    "suggestmeabook": 75,         # What readers are asking for
+    "booksuggestions": 75,        # Reader preferences
+    "YAlit": 50,                  # YA reader community
+
+    # --- Cross-Pillar: Writing & Genre ---
+    "writing": 100,               # General writing community
+    "writers": 100,               # Writer discussions
 }
 
 MIN_PROCESSING_SCORE = 0.65  # Lowered from 0.70 to catch more good Reddit posts
-PROCESSED_IDS_FILE = "processed_posts.txt"
+PROCESSED_IDS_FILE = "processed_posts_romantasy.txt"
 
 # --- RSS Feed Sources Configuration ---
 RSS_FEEDS = [
-    # Pillar 1: Media Accountability & Performance
-    {"name": "AdExchanger", "url": "https://adexchanger.com/feed/", "priority": "high"},
-    {"name": "AdAge", "url": "https://adage.com/rss-feed", "priority": "high"},
-    {"name": "Digiday", "url": "https://digiday.com/feed/", "priority": "high"},
-    {"name": "MediaPost - Online Media", "url": "https://www.mediapost.com/publications/rss/online-media-daily.xml", "priority": "medium"},
-    {"name": "MediaPost - Research", "url": "https://www.mediapost.com/publications/rss/research.xml", "priority": "medium"},
+    # Pillar 1: Romantasy Craft & Structure
+    {"name": "Jane Friedman", "url": "https://www.janefriedman.com/feed/", "priority": "high"},
+    {"name": "Writer's Digest", "url": "https://www.writersdigest.com/feed", "priority": "high"},
+    {"name": "DIY MFA", "url": "https://diymfa.com/feed", "priority": "medium"},
 
-    # Pillar 2: Advertising Strategy & Investment
-    {"name": "The Drum", "url": "https://www.thedrum.com/rss/news/all", "priority": "high"},
-    {"name": "MediaPost - Agency Daily", "url": "https://www.mediapost.com/publications/rss/agency-daily.xml", "priority": "high"},
-    # Removed Search Engine Land - too much SEO/organic content that gets filtered out
-    {"name": "MediaPost - Marketing Daily", "url": "https://www.mediapost.com/publications/rss/marketing-daily.xml", "priority": "medium"},
-    {"name": "AdAge - Brand Marketing", "url": "https://adage.com/section/brand-marketing/rss", "priority": "medium"},
+    # Pillar 2: Market Trends & Publishing
+    {"name": "Publishers Weekly", "url": "https://www.publishersweekly.com/pw/feeds/recent/index.xml", "priority": "high"},
+    {"name": "The Passive Voice", "url": "https://www.thepassivevoice.com/feed/", "priority": "high"},
+    {"name": "Publishers Marketplace", "url": "https://lunch.publishersmarketplace.com/feed/", "priority": "medium"},
+    {"name": "Kirkus Reviews", "url": "https://www.kirkusreviews.com/feeds/reviews/", "priority": "medium"},
 
-    # Pillar 3: Advertising Analytics & Automation
-    # Removed MarTech - too general, not advertising-specific enough
-    {"name": "MediaPost - Data & Targeting", "url": "https://www.mediapost.com/publications/rss/data-and-targeting-insider.xml", "priority": "high"},
-    {"name": "MediaPost - Social Media", "url": "https://www.mediapost.com/publications/rss/social-media-marketing-daily.xml", "priority": "medium"},
-    {"name": "MediaPost - Mobile", "url": "https://www.mediapost.com/publications/rss/mobile-marketing-daily.xml", "priority": "medium"},
+    # Pillar 3: Reader Psychology & Genre Trends
+    {"name": "BookRiot", "url": "https://bookriot.com/feed/", "priority": "high"},
+    {"name": "Smart Bitches Trashy Books", "url": "https://smartbitchestrashybooks.com/feed/", "priority": "high"},
+    {"name": "Dear Author", "url": "https://dearauthor.com/feed/", "priority": "medium"},
 
-    # Industry Research & Insights (Cross-Pillar)
-    {"name": "Think with Google", "url": "https://www.thinkwithgoogle.com/feed/", "priority": "high"},
-    {"name": "Meta for Business", "url": "https://www.facebook.com/business/news/rss/", "priority": "high"},
-    {"name": "IAB", "url": "https://www.iab.com/feed/", "priority": "medium"},
-    {"name": "eMarketer", "url": "https://www.emarketer.com/topics/rss", "priority": "medium"},
+    # Writing Craft & Industry (Cross-Pillar)
+    {"name": "Chuck Wendig", "url": "https://terribleminds.com/ramble/feed/", "priority": "medium"},
+    {"name": "Helping Writers Become Authors", "url": "https://www.helpingwritersbecomeauthors.com/feed/", "priority": "medium"},
 ]
 
 RSS_CONFIG = {
@@ -215,7 +220,7 @@ def fetch_rss_candidates() -> List[Dict[str, Any]]:
     return all_entries
 
 # -------- Manual Queue Functions --------
-MANUAL_QUEUE_FILE = "manual_queue.txt"
+MANUAL_QUEUE_FILE = "manual_queue_romantasy.txt"
 
 def fetch_manual_queue_candidates() -> List[Dict[str, Any]]:
     """Fetch candidates from manual queue file (one URL or topic per line)"""
@@ -603,12 +608,12 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
     
     # 2) Category
     pillar_to_category = {
-        "Media Accountability & Performance": "Media Accountability",
-        "Advertising Strategy & Investment": "Ad Strategy",
-        "Media Analysis, AI & Automation": "Ad-Tech & AI",
+        "Romantasy Craft & Structure": "Craft & Writing",
+        "Market Trends & Publishing": "Publishing & Market",
+        "Reader Psychology & Audience": "Reader Psychology",
     }
-    pillar_name = winning_angle.get("pillar", "Ad Strategy")
-    out["category_name"] = pillar_to_category.get(pillar_name, "Ad Strategy")
+    pillar_name = winning_angle.get("pillar", "Craft & Writing")
+    out["category_name"] = pillar_to_category.get(pillar_name, "Craft & Writing")
     log.info(f"→ Pillar-based Category: {out['category_name']}")
     
     # 3) Save & Publish STUB
@@ -625,67 +630,49 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
         log.info(f"→ Idea packet saved: {fname}")
     except Exception as e:
         log.error(f"Failed to save local JSON file: {e}")
-    
-    if WP_URL and WP_USERNAME and WP_APP_PASSWORD:
-        log.info("--- Publishing IDEA STUB to WordPress ---")
-        
-        try:
-            import html
-            escape = html.escape
-        except ImportError:
-            log.warning("html module not found. Will not escape <pre> content.")
-            escape = lambda s: s 
 
-        angles_json = escape(json.dumps(out.get('all_angles', []), indent=2))
-        winning_angle_html = f"""
-    <p><strong>Pillar:</strong> {escape(winning_angle.get('pillar', 'N/A'))}</p>
-    <p><strong>Format:</strong> {escape(winning_angle.get('format', 'N/A'))}</p>
-    <p><strong>Angle:</strong> {escape(winning_angle.get('helpful_angle', 'N/A'))}</p>
-    <p><strong>Persona:</strong> {escape(winning_angle.get('expert_persona', 'N/A'))}</p>
-"""
-        research_prompt_escaped = escape(out.get('deep_research_prompt', 'Error: Prompt not generated.'))
-        
-        dev_notes_html = f"""
-<details open>
-    <summary><strong>Generation &amp; Angle Analysis (Advertising E-E-A-T)</strong></summary>
-    
-    <p><strong>Original Source:</strong> <a href="{out['input']}" target="_blank" rel="noopener noreferrer">{escape(out['topic'])}</a></p>
-    
-    <h3>Winning Angle:</h3>
-    {winning_angle_html}
+    # Print output to console instead of WordPress
+    log.info("=" * 80)
+    log.info("✓ ROMANTASY WRITING ADVICE IDEA GENERATED")
+    log.info("=" * 80)
 
-    <hr />
+    print("\n" + "=" * 80)
+    print("🎯 WINNING ANGLE")
+    print("=" * 80)
+    print(f"Pillar: {winning_angle.get('pillar', 'N/A')}")
+    print(f"Format: {winning_angle.get('format', 'N/A')}")
+    print(f"Angle: {winning_angle.get('helpful_angle', 'N/A')}")
+    print(f"Persona: {winning_angle.get('expert_persona', 'N/A')}")
 
-    <h3>Deep Research Prompt (Copy This)</h3>
-    <textarea readonly style="width:100%; min-height:400px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #ccc; border-radius:4px;">{research_prompt_escaped}</textarea>
-    
-    <hr />
-    
-    <h3>All Angles Considered:</h3>
-    <pre style="background-color:#f5f5f5; border:1px solid #ccc; padding:10px; border-radius:4px; white-space: pre-wrap; word-wrap: break-word;">{angles_json}</pre>
+    # Free guide section (if present)
+    free_guide_idea = out.get('free_guide_idea')
+    free_guide_description = out.get('free_guide_description')
 
-</details>
-"""
-        
-        post_title = f"[IDEA] {winning_angle.get('helpful_angle', out.get('topic', 'New Post Idea'))}"
-        excerpt = f"Pillar: {winning_angle.get('pillar', 'N/A')} | Format: {winning_angle.get('format', 'N/A')}"
-        
-        wp_post = publish_to_wordpress(
-            title=post_title,
-            content_html=dev_notes_html,
-            slug=f"idea-{slug_base}",
-            excerpt=excerpt,
-            seo_pack={"title": post_title, "meta_description": excerpt},
-            categories=[out.get("category_name", "Ad Strategy")]
-        )
-        out["wordpress"] = {
-            "id": wp_post.get("id"),
-            "link": wp_post.get("link"),
-            "status": wp_post.get("status")
-        }
-    
-    log.info("="*69)
-    log.info("✓ ADVERTISING E-E-A-T IDEA STUB GENERATED")
+    if free_guide_idea and free_guide_description:
+        print("\n" + "=" * 80)
+        print("💎 FREE GUIDE IDEA (Newsletter Lead Magnet)")
+        print("=" * 80)
+        print(f"Title: {free_guide_idea}")
+        print(f"Description: {free_guide_description}")
+
+    # Deep research prompt
+    print("\n" + "=" * 80)
+    print("📚 DEEP RESEARCH PROMPT")
+    print("=" * 80)
+    print(out.get('deep_research_prompt', 'Error: Prompt not generated.'))
+
+    # All angles considered
+    print("\n" + "=" * 80)
+    print("💡 ALL ANGLES CONSIDERED")
+    print("=" * 80)
+    for i, angle in enumerate(out.get('all_angles', []), 1):
+        print(f"\nAngle {i}:")
+        print(f"  Pillar: {angle.get('pillar')}")
+        print(f"  Format: {angle.get('format')}")
+        print(f"  Angle: {angle.get('helpful_angle')}")
+
+    print("\n" + "=" * 80)
+    log.info(f"Idea saved to: {fname}")
     log.info("="*69)
     return out
 

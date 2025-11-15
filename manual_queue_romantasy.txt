@@ -1,0 +1,10 @@
+# Manual Idea Queue - Romantasy Writing Advice
+# Add one URL or topic per line
+# Lines starting with # are ignored
+# After processing, entries will be commented out automatically
+
+# EXAMPLES (uncomment to use):
+# https://www.publishersweekly.com/some-romantasy-deal
+# Why readers are tired of the chosen one trope in romantasy
+# How to write a training montage that builds romantic tension
+# The BookTok backlash against Fourth Wing copycat plots

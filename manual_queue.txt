@@ -1,0 +1,8 @@
+# Manual Idea Queue - Add one URL or topic per line
+# Lines starting with # are ignored
+# After processing, entries will be commented out automatically
+
+# EXAMPLES (uncomment to use):
+# https://adexchanger.com/some-interesting-article
+# Why retail media networks are outpacing traditional programmatic
+# The hidden costs of CTV advertising attribution
