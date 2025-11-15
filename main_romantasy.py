@@ -676,6 +676,106 @@ def run_idea_factory_stub(topic_or_url: str) -> Dict[str, Any]:
     log.info("="*69)
     return out
 
+def generate_newsletter(all_candidates: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Generate a weekly romantasy newsletter from discovered content"""
+    log.info("=" * 80)
+    log.info("🗞️  GENERATING PLOT BREW NEWSLETTER")
+    log.info("=" * 80)
+
+    if not all_candidates:
+        log.warning("No content available for newsletter generation")
+        return {}
+
+    # Format content for the newsletter prompt
+    content_list = []
+    for i, item in enumerate(all_candidates[:20], 1):  # Top 20 items
+        source_type = item.get('source_type', 'Reddit')
+        source = item.get('subreddit', 'Unknown')
+        content_list.append(
+            f"{i}. **{item['title']}**\n"
+            f"   Source: {source} ({source_type})\n"
+            f"   URL: {item['url']}\n"
+            f"   Relevance Score: {item.get('relevance_score', 0):.2f}\n"
+            f"   Why relevant: {item.get('reason', 'N/A')}\n"
+        )
+
+    weekly_content = "\n".join(content_list)
+
+    # Generate newsletter
+    newsletter_prompt = P.NEWSLETTER_GENERATOR_PROMPT.format(weekly_content=weekly_content)
+    newsletter_result = call("angle_and_plan", newsletter_prompt)  # Reuse the same model
+
+    newsletter = _expect_dict(newsletter_result, "Newsletter Generation")
+
+    # Print newsletter to console
+    print("\n" + "=" * 80)
+    print("📧 PLOT BREW - WEEKLY ROMANTASY ROUNDUP")
+    print("=" * 80)
+    print(f"\n📬 Subject: {newsletter.get('subject_line', 'N/A')}\n")
+
+    print("-" * 80)
+    print("THE COLD OPEN")
+    print("-" * 80)
+    print(newsletter.get('cold_open', 'N/A'))
+
+    main_event = newsletter.get('main_event', {})
+    print("\n" + "-" * 80)
+    print(f"THE MAIN EVENT: {main_event.get('headline', 'N/A')}")
+    print(f"Type: {main_event.get('type', 'N/A')}")
+    print("-" * 80)
+    print(main_event.get('content', 'N/A'))
+
+    trope = newsletter.get('trope_spotlight', {})
+    if trope and trope.get('trope_name'):
+        print("\n" + "-" * 80)
+        print(f"💫 TROPE SPOTLIGHT: {trope.get('trope_name', 'N/A')}")
+        print("-" * 80)
+        print(f"What it is: {trope.get('definition', 'N/A')}")
+        print(f"\nWhy it works: {trope.get('why_it_works', 'N/A')}")
+        print(f"\nRecommendations: {trope.get('recommendations', 'N/A')}")
+
+    brewing = newsletter.get('currently_brewing', {})
+    if brewing:
+        print("\n" + "-" * 80)
+        print("CURRENTLY BREWING")
+        print("-" * 80)
+        if brewing.get('reading'):
+            print(f"📖 Reading: {brewing['reading']}")
+        if brewing.get('writing'):
+            print(f"✍️  Writing: {brewing['writing']}")
+        if brewing.get('obsessing'):
+            print(f"🔍 Obsessing Over: {brewing['obsessing']}")
+
+    community = newsletter.get('community_corner', {})
+    if community and community.get('qotw'):
+        print("\n" + "-" * 80)
+        print("✨ LET'S TALK BOOKS")
+        print("-" * 80)
+        print(f"Question of the Week: {community['qotw']}")
+
+    print("\n" + "-" * 80)
+    print("CLOSING")
+    print("-" * 80)
+    print(newsletter.get('closing', 'N/A'))
+
+    print("\n" + "-" * 80)
+    print("CALL TO ACTION")
+    print("-" * 80)
+    print(newsletter.get('cta', 'N/A'))
+
+    print("\n" + "=" * 80)
+
+    # Save newsletter to file
+    fname = f"NEWSLETTER_ROMANTASY_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    try:
+        with open(fname, "w", encoding="utf-8") as f:
+            json.dump(newsletter, f, indent=2)
+        log.info(f"✓ Newsletter saved: {fname}")
+    except Exception as e:
+        log.error(f"Failed to save newsletter: {e}")
+
+    return newsletter
+
 def main():
     parser = argparse.ArgumentParser(description="Melissa E-E-A-T Idea Factory v8.0 (Advertising Investment Focus)")
     parser.add_argument("topic_or_url", nargs='?', default=None, help="Optional: A specific topic or URL to process.")
@@ -752,6 +852,12 @@ def main():
         if not all_candidates:
             log.info("No candidates from Reddit, RSS, or Manual Queue passed the AI filter. Exiting.")
             return
+
+        # 4b. Generate Weekly Newsletter from all candidates
+        log.info(f"\n{'='*80}")
+        log.info(f"Generating newsletter from {len(all_candidates)} discovered items...")
+        log.info(f"{'='*80}\n")
+        generate_newsletter(all_candidates)
 
         # 5. Filter by minimum quality score
         final_selection = [
