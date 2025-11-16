@@ -1,13 +1,12 @@
 # Social Media Post Generator Guide
 
-Automatically generate Threads and Twitter posts from your articles with AI-powered content and optional Canva template integration.
+Automatically generate Threads and Twitter posts from your articles with AI-powered content.
 
 ## 📁 Files Overview
 
 - **`social_prompts.py`** - AI prompts for both platforms and both streams
 - **`generate_threads_post.py`** - Generate Threads posts (text-only)
-- **`generate_twitter_post.py`** - Generate Twitter posts with Canva integration
-- **`canva_helper.py`** - Canva API helper functions
+- **`generate_twitter_post.py`** - Generate Twitter posts + design template text
 
 ## 🚀 Quick Start
 
@@ -17,7 +16,6 @@ Automatically generate Threads and Twitter posts from your articles with AI-powe
 # Already installed if you're using the idea generator:
 # - anthropic
 # - python-dotenv
-# - requests
 ```
 
 ### 2. Set Up Environment Variables
@@ -27,62 +25,20 @@ Add to your `.env` file:
 ```bash
 # Required for post generation
 ANTHROPIC_API_KEY=your_anthropic_key_here
-
-# Optional - for design automation (see Design API Options below)
-# Canva requires OAuth (complex) - recommend Bannerbear or manual updates instead
-BANNERBEAR_API_KEY=your_bannerbear_key_here
 ```
 
-**⚠️ Important: Canva API Authentication**
+That's it! No other setup needed.
 
-Canva uses OAuth 2.0 authentication, **not simple API keys**. This means automatic Canva integration requires:
-- OAuth 2.0 implementation
-- Web server for callback handling
-- Token management
+### 3. Your Workflow
 
-**Recommended alternatives:**
-1. **Manual workflow** - Copy/paste generated text into Canva (30 seconds)
-2. **Bannerbear** - Simple API key, made for this use case (https://www.bannerbear.com/)
-3. **Placid** - Another API-based design tool (https://placid.app/)
+These scripts generate optimized text for both platforms. You then copy/paste into your design tool of choice.
 
-### 3. Choose Your Design Workflow
+**Simple 3-step process:**
+1. Run the script and paste your article
+2. Copy the generated text
+3. Paste into your design tool (Canva, Figma, Bannerbear, etc.)
 
-#### **Option A: Manual Canva Updates (Recommended for Most Users)**
-
-The scripts generate perfect text for your Canva templates. Just copy/paste:
-
-```bash
-python generate_twitter_post.py --stream advertising
-
-# Output:
-Tweet Text: AI ad spend hit $50B...
-Headline: AI Ad Spend Hits $50B
-Stat: 67% Can't Prove ROI
-
-# Then manually:
-# 1. Open your Canva template
-# 2. Paste "AI Ad Spend Hits $50B" into headline
-# 3. Paste "67% Can't Prove ROI" into stat box
-# 4. Export and post
-```
-
-**Time: 30 seconds. No API setup needed.**
-
-#### **Option B: Automated Design with Bannerbear**
-
-For full automation, use Bannerbear instead of Canva:
-
-1. Sign up at https://www.bannerbear.com/ (free tier available)
-2. Create a template with "Headline" and "Stat" text layers
-3. Get your API key from the dashboard
-4. Add to `.env`: `BANNERBEAR_API_KEY=your_key`
-5. Run: `python generate_twitter_post.py --stream advertising --bannerbear-template TEMPLATE_ID`
-
-**I can modify the scripts to support Bannerbear if you're interested!**
-
-#### **Option C: Full Canva OAuth (Advanced)**
-
-Requires implementing OAuth 2.0 flow. Only recommended if you're building a larger application. Let me know if you need this.
+**Total time: ~30 seconds**
 
 ## 📱 Usage
 
@@ -124,53 +80,28 @@ python generate_twitter_post.py --stream advertising
 # Then paste your article text and press Ctrl+D
 ```
 
-#### With Canva Template Update
-```bash
-python generate_twitter_post.py --stream advertising --canva-design YOUR_TEMPLATE_ID
-```
-
 #### From File
 ```bash
-cat article.txt | python generate_twitter_post.py --stream romantasy --canva-design ABC123
+cat article.txt | python generate_twitter_post.py --stream romantasy
 ```
 
-#### Direct Text with Canva
+#### Direct Text
 ```bash
-python generate_twitter_post.py \
-  --stream advertising \
-  --text "Your article here..." \
-  --canva-design YOUR_TEMPLATE_ID
+python generate_twitter_post.py --stream advertising --text "Your article here..."
+```
+
+#### Save to Specific File
+```bash
+python generate_twitter_post.py --stream advertising --output my_tweet.json
 ```
 
 **Output:**
-- Prints tweet text and Canva template text to console
+- Tweet text (ready to post)
+- Design template text (headline, stat/subtext)
 - Auto-saves to `twitter_post_{stream}_{timestamp}.json`
-- If Canva integration is enabled:
-  - Creates a duplicate of your template
-  - Updates text elements
-  - Exports as PNG
-  - Provides edit URL and download URL
 
----
-
-## 🎨 Canva Integration Details
-
-### How It Works
-
-1. **Duplicate**: Creates a copy of your template (preserves original)
-2. **Update**: Fills in text placeholders with generated content
-3. **Export**: Exports the updated design as PNG
-4. **Return**: Provides edit URL and download link
-
-### Workflow Example
-
-```bash
-# Generate Twitter post with Canva update
-python generate_twitter_post.py \
-  --stream advertising \
-  --canva-design DAGBxyz123
-
-# Output:
+**Example output:**
+```
 🐦 TWITTER POST (ADVERTISING)
 ============================================================
 
@@ -180,43 +111,45 @@ AI ad spend hit $50B in 2024
 
 But 67% of marketers can't prove ROI.
 
-The hype train is crashing. Finally.
+The hype train is crashing.
 ------------------------------------------------------------
 Character count: 98
 
-🎨 CANVA TEMPLATE TEXT:
+🎨 DESIGN TEMPLATE TEXT:
 ------------------------------------------------------------
 Headline: AI Ad Spend Hits $50B
 Stat: 67% Can't Prove ROI
 ------------------------------------------------------------
 
-🎨 UPDATING CANVA TEMPLATE...
-1. Duplicating template DAGBxyz123...
-2. Updating text in design NEW_ID_HERE...
-   - Headline: AI Ad Spend Hits $50B
-   - Stat: 67% Can't Prove ROI
-3. Exporting as png...
-✅ Template updated! Edit at: https://canva.com/design/NEW_ID/edit
-   Download: https://canva.com/export/NEW_ID/download.png
-
-💾 Saved to: twitter_post_advertising_20250116_143022.json
+💡 Copy these values into your design tool (Canva, Figma, Bannerbear, etc.)
 ```
 
-### Without Canva API Key
+---
 
-If `CANVA_API_KEY` is not set, the script still works:
+## 🎨 Using with Design Tools
 
-```bash
-python generate_twitter_post.py --stream advertising
+The scripts generate text that works with **any design tool**:
 
-# Output shows what to manually update:
-⚠️  Canva API key not configured. Update template manually.
+### **Canva**
+1. Create a template with text elements for "Headline" and "Stat" (or "Subtext")
+2. Run the script to generate text
+3. Copy/paste the values into your template
+4. Export and post
 
-Headline: AI Ad Spend Hits $50B
-Stat: 67% Can't Prove ROI
-```
+### **Figma**
+Same process - create text layers and paste the generated values
 
-Just copy these values into your Canva template manually.
+### **Bannerbear, Placid, or other design APIs**
+If you want full automation with a design API tool, these have simple API key authentication (unlike Canva's OAuth). The scripts can be extended to integrate with these tools.
+
+### **No Design Tool?**
+Just post the tweet text alone - Twitter works fine with text-only posts too!
+
+**Recommended workflow:**
+- Create one template in your preferred tool
+- Save it as a master
+- Each time you run the script, duplicate the master and update the text
+- Takes ~30 seconds
 
 ---
 
@@ -244,7 +177,7 @@ Just copy these values into your Canva template manually.
 - Punchy, front-loaded hook
 - Data/stats in first line
 - 240-260 characters (leaves room for link)
-- Works with visual Canva template
+- Pairs with design template (headline + stat)
 - Numbers and percentages
 
 **Plot Brew (Romantasy):**
@@ -266,16 +199,6 @@ Just copy these values into your Canva template manually.
 - Make sure to paste text and press `Ctrl+D` to finish input
 - Or use `--text "..."` flag
 - Or pipe from file: `cat file.txt | python ...`
-
-### Canva: "element not found"
-- Check that your template has text elements
-- Make sure element names match exactly (case-sensitive)
-- Edit `generate_twitter_post.py` to customize element mapping
-
-### Canva: "403 Forbidden" or "401 Unauthorized"
-- Check that `CANVA_API_KEY` is correct
-- Verify your Canva API app has necessary permissions
-- Ensure template is accessible with your API credentials
 
 ### JSON parsing error
 - The AI sometimes returns non-JSON for Twitter posts
@@ -336,7 +259,7 @@ To add a third blog stream (e.g., "fitness"):
 1. **Paste complete articles**: Include headline, body, data/stats
 2. **Include context**: Add relevant quotes, numbers, sources
 3. **Review before posting**: AI is good but not perfect
-4. **Test Canva templates**: Run once manually to verify element names
+4. **Keep a master template**: Create one design template and duplicate for each post
 
 ### Workflow Recommendation
 
@@ -345,9 +268,9 @@ To add a third blog stream (e.g., "fitness"):
 3. Run generator (Threads + Twitter)
 4. Review generated posts
 5. Make minor edits if needed
-6. Post Threads first (easier, no image)
-7. Use Canva-generated image for Twitter
-8. Schedule or post immediately
+6. Post Threads first (easier, text-only)
+7. Copy template text into your design tool for Twitter
+8. Export image and post
 
 ### Automation Ideas
 
@@ -356,35 +279,36 @@ Create bash scripts for common workflows:
 ```bash
 #!/bin/bash
 # generate_social.sh
+# Generate both Threads and Twitter posts from an article
 
 ARTICLE_FILE=$1
 STREAM=$2
-CANVA_ID=$3
 
-echo "Generating Threads post..."
+echo "🧵 Generating Threads post..."
 cat "$ARTICLE_FILE" | python generate_threads_post.py --stream "$STREAM"
 
 echo ""
-echo "Generating Twitter post..."
-cat "$ARTICLE_FILE" | python generate_twitter_post.py \
-  --stream "$STREAM" \
-  --canva-design "$CANVA_ID"
+echo "🐦 Generating Twitter post..."
+cat "$ARTICLE_FILE" | python generate_twitter_post.py --stream "$STREAM"
+
+echo ""
+echo "✅ Done! Check the generated files and copy text into your design tool."
 ```
 
 Usage:
 ```bash
 chmod +x generate_social.sh
-./generate_social.sh article.txt advertising YOUR_TEMPLATE_ID
+./generate_social.sh article.txt advertising
 ```
 
 ---
 
 ## 🆘 Support
 
-- Check the `--help` flag on each script
+- Check the `--help` flag on each script for usage examples
 - Review error messages (they're usually specific)
-- Test Canva API connection: `python canva_helper.py`
-- Verify API keys in `.env`
+- Verify ANTHROPIC_API_KEY is set in `.env`
+- For design tool integration, check their respective API docs
 
 ---
 
