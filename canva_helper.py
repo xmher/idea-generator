@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # canva_helper.py
-# Helper functions for Canva API integration
+# Helper functions for design API integration
+#
+# NOTE: Canva uses OAuth 2.0, not simple API keys. This is a placeholder.
+# For production use, consider:
+# 1. Manual Canva updates (simplest)
+# 2. Bannerbear API (simple key-based auth, same use case)
+# 3. Placid API (simple key-based auth)
+# 4. Full OAuth implementation with Canva (complex)
 
 import os
 import sys
@@ -14,7 +21,12 @@ try:
 except Exception:
     pass
 
-CANVA_API_KEY = os.getenv("CANVA_API_KEY")
+# For Bannerbear (alternative to Canva)
+BANNERBEAR_API_KEY = os.getenv("BANNERBEAR_API_KEY")
+BANNERBEAR_BASE_URL = "https://api.bannerbear.com/v2"
+
+# Canva requires OAuth, not API keys
+CANVA_API_KEY = os.getenv("CANVA_API_KEY")  # Not actually how Canva works
 CANVA_BASE_URL = "https://api.canva.com/v1"
 
 class CanvaHelper:

@@ -28,40 +28,61 @@ Add to your `.env` file:
 # Required for post generation
 ANTHROPIC_API_KEY=your_anthropic_key_here
 
-# Optional - only needed for automatic Canva template updates
-CANVA_API_KEY=your_canva_api_key_here
+# Optional - for design automation (see Design API Options below)
+# Canva requires OAuth (complex) - recommend Bannerbear or manual updates instead
+BANNERBEAR_API_KEY=your_bannerbear_key_here
 ```
 
-**Getting a Canva API Key:**
-1. Go to https://www.canva.com/developers/
-2. Create a developer account or log in
-3. Create a new app/integration
-4. Copy your API key
+**⚠️ Important: Canva API Authentication**
 
-### 3. Prepare Your Canva Template (Twitter Only)
+Canva uses OAuth 2.0 authentication, **not simple API keys**. This means automatic Canva integration requires:
+- OAuth 2.0 implementation
+- Web server for callback handling
+- Token management
 
-For Twitter posts to automatically update Canva templates, you need:
+**Recommended alternatives:**
+1. **Manual workflow** - Copy/paste generated text into Canva (30 seconds)
+2. **Bannerbear** - Simple API key, made for this use case (https://www.bannerbear.com/)
+3. **Placid** - Another API-based design tool (https://placid.app/)
 
-1. **Create a template in Canva** with text placeholders
-2. **Name your text elements** (important!):
-   - For **Advertising**: Name elements "Headline" and "Stat"
-   - For **Romantasy**: Name elements "Headline" and "Subtext"
-3. **Get your template ID** from the Canva URL:
-   - URL format: `https://www.canva.com/design/ABC123XYZ/...`
-   - Template ID: `ABC123XYZ`
+### 3. Choose Your Design Workflow
 
-**Customizing Element Names:**
+#### **Option A: Manual Canva Updates (Recommended for Most Users)**
 
-If you want different element names in your template, edit `generate_twitter_post.py`:
+The scripts generate perfect text for your Canva templates. Just copy/paste:
 
-```python
-# Around line 100-109
-if stream == "advertising":
-    element_mapping = {
-        "canva_headline": "YOUR_ELEMENT_NAME_HERE",  # Change this
-        "canva_stat": "YOUR_STAT_ELEMENT_NAME"       # Change this
-    }
+```bash
+python generate_twitter_post.py --stream advertising
+
+# Output:
+Tweet Text: AI ad spend hit $50B...
+Headline: AI Ad Spend Hits $50B
+Stat: 67% Can't Prove ROI
+
+# Then manually:
+# 1. Open your Canva template
+# 2. Paste "AI Ad Spend Hits $50B" into headline
+# 3. Paste "67% Can't Prove ROI" into stat box
+# 4. Export and post
 ```
+
+**Time: 30 seconds. No API setup needed.**
+
+#### **Option B: Automated Design with Bannerbear**
+
+For full automation, use Bannerbear instead of Canva:
+
+1. Sign up at https://www.bannerbear.com/ (free tier available)
+2. Create a template with "Headline" and "Stat" text layers
+3. Get your API key from the dashboard
+4. Add to `.env`: `BANNERBEAR_API_KEY=your_key`
+5. Run: `python generate_twitter_post.py --stream advertising --bannerbear-template TEMPLATE_ID`
+
+**I can modify the scripts to support Bannerbear if you're interested!**
+
+#### **Option C: Full Canva OAuth (Advanced)**
+
+Requires implementing OAuth 2.0 flow. Only recommended if you're building a larger application. Let me know if you need this.
 
 ## 📱 Usage
 
