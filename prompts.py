@@ -337,6 +337,7 @@ For EACH angle, you must define:
 2. **format** - Which content format (Investigative, Thought Piece, or How-To)
 3. **helpful_angle** - A compelling, specific headline that goes "beyond the obvious"
 4. **expert_persona** - Which lens of your trifecta you're using
+5. **angle_expansion** - 2-4 sentences explaining the angle idea and how this specific pillar+format combination unlocks unique value. Explain what makes this approach powerful.
 
 **ANGLE QUALITY CHECKLIST:**
 ✅ Does it leverage your unique trifecta experience?
@@ -355,30 +356,35 @@ For EACH angle, you must define:
 - **format:** Investigative/Research Piece
 - **helpful_angle:** "[Investigative] I Audited Google's 'Transparency' Claims—Here's What They're Still Hiding"
 - **expert_persona:** "Melissa, writing from her media auditor experience at a global accountability firm."
+- **angle_expansion:** "This investigative approach leverages the Media Accountability pillar to systematically audit Google's transparency claims using the same methodology I used when auditing major advertiser spend. By combining the investigative format with auditor expertise, we can identify measurement gaps and verification blind spots that platform marketing glosses over—exactly the kind of critical analysis advertisers and agencies need before adjusting investment strategies."
 
 **Angle 2 (Agency Lens - Opinion):**
 - **pillar:** Advertising Strategy & Investment
 - **format:** Opinion/Thought Piece
 - **helpful_angle:** "[Opinion] Why Google's Transparency Update Creates New Risk for Agency Holding Companies"
 - **expert_persona:** "Melissa, writing from her global investment management experience at a major agency network."
+- **angle_expansion:** "This thought piece uses the Advertising Investment pillar to analyze business implications that agency investment managers are grappling with right now. The opinion format allows me to synthesize real experience managing guaranteed commitments and client risk across markets, revealing strategic considerations that won't appear in Google's announcement but will directly impact agency SLAs and pitch strategies."
 
 **Angle 3 (In-House Lens - Digital How-To):**
 - **pillar:** Advertising Analytics & Automation
 - **format:** Expert How-To/Guide
 - **helpful_angle:** "[How-To] The Python Script I Built to Automate 20 Hours of Advertising Reporting Per Week"
 - **expert_persona:** "Melissa, writing from her in-house experience building advertising analytics automation using Python and SQL."
+- **angle_expansion:** "This how-to guide taps into the Analytics & Automation pillar to share practical, battle-tested code that in-house teams can actually use. The expert guide format lets me provide step-by-step technical implementation based on real reporting workflows I've automated, giving advertising analysts a concrete solution rather than generic advice about 'using automation.'"
 
 **Angle 4 (Traditional Media How-To):**
 - **pillar:** Advertising Strategy & Investment
 - **format:** Expert How-To/Guide
 - **helpful_angle:** "[Guide] How to Plan a TV Campaign When You're Not a Big Brand (From Someone Who's Audited Hundreds)"
 - **expert_persona:** "Melissa, writing from her media auditor and agency investment experience with traditional media buying across TV, Radio, and OOH."
+- **angle_expansion:** "This guide uses the Advertising Investment pillar to demystify TV planning for smaller advertisers who can't afford agency markups. The how-to format combined with my auditor and investment management background allows me to reveal the actual planning methodology and cost structures I've seen work across hundreds of campaigns—insider knowledge that levels the playing field."
 
 **Angle 5 (Cross-Pillar Opinion):**
 - **pillar:** Media Accountability & Performance
 - **format:** Opinion/Thought Piece
 - **helpful_angle:** "[Opinion] The Real Reason Platforms Announce 'Transparency' (Hint: It's Not Trust)"
 - **expert_persona:** "Melissa, synthesizing insights from all three roles: auditor, agency manager, and in-house analyst."
+- **angle_expansion:** "This opinion piece draws from the Media Accountability pillar but synthesizes all three perspectives to decode platform behavior. The thought piece format lets me connect dots between auditor skepticism, agency risk management, and in-house operational constraints to reveal platform motivations that individual practitioners might miss—offering a strategic read on industry power dynamics."
 
 ---
 
@@ -480,26 +486,30 @@ Provide findings in structured sections matching the requirements above. Include
       "pillar": "Media Accountability & Performance",
       "format": "Investigative/Research Piece",
       "helpful_angle": "[Investigative] I Audited Google's 'Transparency' Claims—Here's What They're Still Hiding",
-      "expert_persona": "Melissa, writing from her media auditor experience at a global accountability firm."
+      "expert_persona": "Melissa, writing from her media auditor experience at a global accountability firm.",
+      "angle_expansion": "This investigative approach leverages the Media Accountability pillar to systematically audit Google's transparency claims using the same methodology I used when auditing major advertiser spend. By combining the investigative format with auditor expertise, we can identify measurement gaps and verification blind spots that platform marketing glosses over."
     }},
     {{
       "pillar": "Advertising Strategy & Investment",
       "format": "Opinion/Thought Piece",
       "helpful_angle": "[Opinion] Why Google's Transparency Update Creates New Risk for Agency Holding Companies",
-      "expert_persona": "Melissa, writing from her global investment management experience at a major agency network."
+      "expert_persona": "Melissa, writing from her global investment management experience at a major agency network.",
+      "angle_expansion": "This thought piece uses the Advertising Investment pillar to analyze business implications that agency investment managers are grappling with right now. The opinion format allows me to synthesize real experience managing guaranteed commitments and client risk across markets."
     }},
     {{
       "pillar": "Advertising Analytics & Automation",
       "format": "Expert How-To/Guide",
       "helpful_angle": "[How-To] The Python Script I Built to Automate Advertising Reporting",
-      "expert_persona": "Melissa, writing from her in-house experience building advertising analytics automation."
+      "expert_persona": "Melissa, writing from her in-house experience building advertising analytics automation.",
+      "angle_expansion": "This how-to guide taps into the Analytics & Automation pillar to share practical, battle-tested code that in-house teams can actually use. The expert guide format lets me provide step-by-step technical implementation based on real reporting workflows I've automated."
     }}
   ],
   "winning_angle": {{
       "pillar": "Media Accountability & Performance",
       "format": "Investigative/Research Piece",
       "helpful_angle": "[Investigative] I Audited Google's 'Transparency' Claims—Here's What They're Still Hiding",
-      "expert_persona": "Melissa, writing from her media auditor experience at a global accountability firm."
+      "expert_persona": "Melissa, writing from her media auditor experience at a global accountability firm.",
+      "angle_expansion": "This investigative approach leverages the Media Accountability pillar to systematically audit Google's transparency claims using the same methodology I used when auditing major advertiser spend. By combining the investigative format with auditor expertise, we can identify measurement gaps and verification blind spots that platform marketing glosses over—exactly the kind of critical analysis advertisers and agencies need before adjusting investment strategies."
   }},
   "deep_research_prompt": "[Insert the complete, detailed research prompt following the template above. Make it specific to the winning angle, filling in all bracketed placeholders with actual content from the winning angle.]"
 }}
