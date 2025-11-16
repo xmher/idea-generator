@@ -13,9 +13,13 @@ Automatically generate Threads and Twitter posts from your articles with AI-powe
 ### 1. Install Dependencies
 
 ```bash
-# Already installed if you're using the idea generator:
-# - anthropic
-# - python-dotenv
+# Install required packages
+pip install anthropic google-genai python-dotenv Pillow
+```
+
+Or if you have the full idea generator:
+```bash
+pip install -r requirements.txt
 ```
 
 ### 2. Set Up Environment Variables
@@ -25,20 +29,32 @@ Add to your `.env` file:
 ```bash
 # Required for post generation
 ANTHROPIC_API_KEY=your_anthropic_key_here
+
+# Optional - for AI image generation
+GOOGLE_API_KEY=your_google_api_key_here
 ```
 
-That's it! No other setup needed.
+**Getting a Google API Key:**
+1. Go to https://aistudio.google.com/apikey
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy and paste into your `.env` file
 
 ### 3. Your Workflow
 
-These scripts generate optimized text for both platforms. You then copy/paste into your design tool of choice.
+**Option A: With AI Image Generation (Recommended)**
+1. Run the script with `--generate-image` flag
+2. Get tweet text + a fully-designed Twitter image
+3. Upload and post!
 
-**Simple 3-step process:**
-1. Run the script and paste your article
+**Total time: ~1 minute** (fully automated)
+
+**Option B: Manual Design**
+1. Run the script without flags
 2. Copy the generated text
-3. Paste into your design tool (Canva, Figma, Bannerbear, etc.)
+3. Paste into your design tool (Canva, Figma, etc.)
 
-**Total time: ~30 seconds**
+**Total time: ~30 seconds + design time**
 
 ## 📱 Usage
 
@@ -74,33 +90,37 @@ python generate_threads_post.py --stream advertising --output my_thread.txt
 
 ### Twitter Posts
 
-#### Interactive Mode (Recommended)
+#### With AI Image Generation (Recommended!)
 ```bash
-python generate_twitter_post.py --stream advertising
+# Interactive mode
+python generate_twitter_post.py --stream advertising --generate-image
 # Then paste your article text and press Ctrl+D
+
+# From file
+cat article.txt | python generate_twitter_post.py --stream romantasy --generate-image
+
+# Direct text
+python generate_twitter_post.py --stream advertising --text "Your article..." --generate-image
 ```
 
-#### From File
-```bash
-cat article.txt | python generate_twitter_post.py --stream romantasy
-```
-
-#### Direct Text
-```bash
-python generate_twitter_post.py --stream advertising --text "Your article here..."
-```
-
-#### Save to Specific File
-```bash
-python generate_twitter_post.py --stream advertising --output my_tweet.json
-```
-
-**Output:**
+**Output with --generate-image:**
 - Tweet text (ready to post)
 - Design template text (headline, stat/subtext)
-- Auto-saves to `twitter_post_{stream}_{timestamp}.json`
+- **Fully-designed PNG image (1344x768, perfect for Twitter)**
+- JSON file with all data
+- Auto-saves both text and image with timestamps
 
-**Example output:**
+#### Without Image (Manual Design)
+```bash
+python generate_twitter_post.py --stream advertising
+```
+
+**Output without --generate-image:**
+- Tweet text (ready to post)
+- Design template text (for manual design)
+- JSON file with timestamp
+
+**Example output (with --generate-image):**
 ```
 🐦 TWITTER POST (ADVERTISING)
 ============================================================
@@ -121,35 +141,62 @@ Headline: AI Ad Spend Hits $50B
 Stat: 67% Can't Prove ROI
 ------------------------------------------------------------
 
-💡 Copy these values into your design tool (Canva, Figma, Bannerbear, etc.)
+🎨 GENERATING AI IMAGE...
+------------------------------------------------------------
+🎨 Generating social media image for advertising stream...
+✅ Image saved: twitter_image_advertising_20250116_143022.png
+🖼️  Image ready: twitter_image_advertising_20250116_143022.png
+------------------------------------------------------------
+
+============================================================
+💾 Text saved to: twitter_post_advertising_20250116_143022.json
+🖼️  Image saved to: twitter_image_advertising_20250116_143022.png
+
+✅ Ready to post! Upload twitter_image_advertising_20250116_143022.png to Twitter with the tweet text above.
 ```
+
+The generated image will be a professional 16:9 Twitter graphic with:
+- **The Viral Edit**: Bold, modern design with dark background and bright accents
+- **Plot Brew**: Warm, magical design with jewel tones and fantasy elements
 
 ---
 
-## 🎨 Using with Design Tools
+## 🎨 Design Options
 
-The scripts generate text that works with **any design tool**:
+### **Option 1: AI-Generated Images with Gemini (Recommended)**
 
-### **Canva**
+The `--generate-image` flag uses Google's Gemini AI to create professional social media graphics:
+
+**Advantages:**
+- Fully automated - no design skills needed
+- Branded designs for each stream (The Viral Edit / Plot Brew)
+- Perfect 16:9 aspect ratio for Twitter
+- Text is rendered in the image (no manual copy/paste)
+- Takes ~30-60 seconds total
+
+**How it works:**
+1. AI generates tweet text + headline + stat
+2. Gemini creates a custom graphic with that text baked in
+3. You get a ready-to-upload PNG file
+
+**Design styles:**
+- **The Viral Edit**: Bold, modern, dark background with bright accents, data visualization elements
+- **Plot Brew**: Warm, magical, jewel tones, fantasy elements (stars, books, quills)
+
+### **Option 2: Manual Design Tools**
+
+If you prefer full design control or want to match existing brand guidelines:
+
+**Canva:**
 1. Create a template with text elements for "Headline" and "Stat" (or "Subtext")
-2. Run the script to generate text
-3. Copy/paste the values into your template
+2. Run the script WITHOUT `--generate-image`
+3. Copy/paste the generated values into your template
 4. Export and post
 
-### **Figma**
+**Figma / Other Tools:**
 Same process - create text layers and paste the generated values
 
-### **Bannerbear, Placid, or other design APIs**
-If you want full automation with a design API tool, these have simple API key authentication (unlike Canva's OAuth). The scripts can be extended to integrate with these tools.
-
-### **No Design Tool?**
-Just post the tweet text alone - Twitter works fine with text-only posts too!
-
-**Recommended workflow:**
-- Create one template in your preferred tool
-- Save it as a master
-- Each time you run the script, duplicate the master and update the text
-- Takes ~30 seconds
+**Time:** ~2-3 minutes including design
 
 ---
 
