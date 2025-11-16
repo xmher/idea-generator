@@ -365,6 +365,7 @@ For EACH angle, you must define:
 2. **format** - Which content format (Investigative, Thought Piece, or How-To)
 3. **helpful_angle** - A compelling, specific headline that goes "beyond the obvious"
 4. **expert_persona** - Which lens of your trifecta you're using
+5. **angle_expansion** - 2-4 sentences explaining the angle idea and how this specific pillar+format combination unlocks unique value. Explain what makes this approach powerful.
 
 **ANGLE QUALITY CHECKLIST:**
 ✅ Does it leverage your unique trifecta experience?
@@ -383,30 +384,35 @@ For EACH angle, you must define:
 - **format:** Analysis/Deep Dive
 - **helpful_angle:** "[Analysis] I Studied 50 Bestselling Romantasy Books—Here's How They Actually Balance Two Plots Without Sacrificing Either"
 - **expert_persona:** "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution."
+- **angle_expansion:** "This deep dive uses the Craft & Structure pillar to reveal actual structural patterns from bestselling romantasy that writers can apply. The analysis format allows me to break down scene ratios, plot thread weaving, and pacing decisions across multiple books—showing writers the concrete formula rather than vague advice about 'balance.'"
 
 **Angle 2 (Market Watcher Lens - Opinion):**
 - **pillar:** Market Trends & Publishing
 - **format:** Opinion/Hot Take
 - **helpful_angle:** "[Opinion] Publishers Got the Romance-Fantasy Balance Wrong (BookTok Is Showing Them What Actually Works)"
 - **expert_persona:** "Melissa, writing from her market watcher experience tracking what's selling in romantasy and where debut authors are finding success."
+- **angle_expansion:** "This opinion piece leverages the Market Trends pillar to challenge conventional publishing wisdom with real BookTok and sales data. The hot take format lets me synthesize market signals that show what readers actually want versus what traditional publishing assumed—critical insight for writers making positioning decisions."
 
 **Angle 3 (Reader Psychologist Lens - How-To):**
 - **pillar:** Reader Psychology & Audience
 - **format:** Craft Guide/How-To
 - **helpful_angle:** "[How-To] Why Readers Love ACOTAR's Plot Balance (And How to Write It Into Your Romantasy)"
 - **expert_persona:** "Melissa, writing from her reader psychology experience understanding what emotional beats and story structures romantasy readers crave."
+- **angle_expansion:** "This how-to guide draws from the Reader Psychology pillar to decode why specific story choices resonate with romantasy audiences. The craft guide format allows me to translate reader preferences into actionable writing techniques, showing writers how to create the emotional momentum readers are looking for."
 
 **Angle 4 (Craft Analyst Lens - Deeper How-To):**
 - **pillar:** Romantasy Craft & Structure
 - **format:** Craft Guide/How-To
 - **helpful_angle:** "[Guide] The Scene Ratio That Makes Dual-Plot Romantasy Work: A Formula From Fourth Wing, ACOTAR, and From Blood and Ash"
 - **expert_persona:** "Melissa, writing from her craft analyst experience breaking down structure and pacing in bestselling romantasy novels."
+- **angle_expansion:** "This guide uses the Craft & Structure pillar to provide a data-driven formula based on actual bestsellers. The how-to format lets me share the specific scene ratios and structural patterns I've identified across successful romantasy—giving writers a practical template they can adapt to their own manuscripts."
 
 **Angle 5 (Cross-Pillar Opinion):**
 - **pillar:** Reader Psychology & Audience
 - **format:** Opinion/Hot Take
 - **helpful_angle:** "[Opinion] Readers Don't Want 'Balance'—They Want Emotional Momentum (Why That Changes How You Plot Romantasy)"
 - **expert_persona:** "Melissa, synthesizing insights from all three roles: craft analyst, market watcher, and reader psychologist."
+- **angle_expansion:** "This opinion piece synthesizes all three pillars to reframe the entire conversation about dual plotting in romantasy. The hot take format allows me to challenge craft assumptions by connecting reader psychology data, market trends, and structural analysis—revealing that writers are solving for the wrong problem."
 
 ---
 
@@ -543,26 +549,30 @@ If a guide does NOT make sense, set both fields to null.
       "pillar": "Romantasy Craft & Structure",
       "format": "Analysis/Deep Dive",
       "helpful_angle": "[Analysis] I Studied 50 Bestselling Romantasy Books—Here's How They Actually Balance Two Plots Without Sacrificing Either",
-      "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution."
+      "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution.",
+      "angle_expansion": "This deep dive uses the Craft & Structure pillar to reveal actual structural patterns from bestselling romantasy that writers can apply. The analysis format allows me to break down scene ratios, plot thread weaving, and pacing decisions across multiple books."
     }},
     {{
       "pillar": "Market Trends & Publishing",
       "format": "Opinion/Hot Take",
       "helpful_angle": "[Opinion] Publishers Got the Romance-Fantasy Balance Wrong (BookTok Is Showing Them What Actually Works)",
-      "expert_persona": "Melissa, writing from her market watcher experience tracking what's selling in romantasy and where debut authors are finding success."
+      "expert_persona": "Melissa, writing from her market watcher experience tracking what's selling in romantasy and where debut authors are finding success.",
+      "angle_expansion": "This opinion piece leverages the Market Trends pillar to challenge conventional publishing wisdom with real BookTok and sales data. The hot take format lets me synthesize market signals that show what readers actually want versus what traditional publishing assumed."
     }},
     {{
       "pillar": "Reader Psychology & Audience",
       "format": "Craft Guide/How-To",
       "helpful_angle": "[How-To] Why Readers Love ACOTAR's Plot Balance (And How to Write It Into Your Romantasy)",
-      "expert_persona": "Melissa, writing from her reader psychology experience understanding what emotional beats and story structures romantasy readers crave."
+      "expert_persona": "Melissa, writing from her reader psychology experience understanding what emotional beats and story structures romantasy readers crave.",
+      "angle_expansion": "This how-to guide draws from the Reader Psychology pillar to decode why specific story choices resonate with romantasy audiences. The craft guide format allows me to translate reader preferences into actionable writing techniques."
     }}
   ],
   "winning_angle": {{
       "pillar": "Romantasy Craft & Structure",
       "format": "Analysis/Deep Dive",
       "helpful_angle": "[Analysis] I Studied 50 Bestselling Romantasy Books—Here's How They Actually Balance Two Plots Without Sacrificing Either",
-      "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution."
+      "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution.",
+      "angle_expansion": "This deep dive uses the Craft & Structure pillar to reveal actual structural patterns from bestselling romantasy that writers can apply. The analysis format allows me to break down scene ratios, plot thread weaving, and pacing decisions across multiple books—showing writers the concrete formula rather than vague advice about 'balance.'"
   }},
   "deep_research_prompt": "[Insert the complete, detailed research prompt following the template above. Make it specific to the winning angle, filling in all bracketed placeholders with actual content from the winning angle.]",
   "free_guide_idea": "The Dual-Plot Balance Worksheet for Romantasy Writers",
