@@ -80,11 +80,93 @@ def generate_twitter_post(article_text: str, stream: str = "advertising") -> dic
 
     return post_data
 
-def generate_social_image(headline: str, stat_or_subtext: str, stream: str = "advertising") -> str:
+def generate_image_prompt(article_text: str, headline: str, stat_or_subtext: str, stream: str = "advertising") -> str:
     """
-    Generate a social media image with text using Gemini.
+    Use Claude to generate a custom, contextually relevant image prompt based on the article content.
 
     Args:
+        article_text: The original article text
+        headline: The main headline text
+        stat_or_subtext: The stat (advertising) or subtext (romantasy)
+        stream: Either 'advertising' or 'romantasy'
+
+    Returns:
+        A custom image generation prompt tailored to the article content
+    """
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY not found in environment")
+
+    print(f"🤖 Generating custom image prompt with Claude...")
+
+    # Create stream-specific brand guidelines
+    if stream == "advertising":
+        brand_guidelines = """**BRAND: "The Viral Edit"**
+- Newsletter for advertising professionals
+- Visual Style: Professional, data-driven, bold, modern
+- Color Palette: Dark backgrounds (deep navy, charcoal) with bright accents (electric blue, neon green, vibrant orange)
+- Typography: Bold, modern sans-serif fonts
+- Layout Preference: Two-thirds rule - text on left 2/3, abstract design on right 1/3
+- Visual Elements: Abstract geometric shapes, data visualization elements (charts, graphs), subtle gradients
+- Mood: Authoritative, data-driven, trustworthy but energetic
+- Branding: Include small "THE VIRAL EDIT" branding in bottom corner"""
+    else:  # romantasy
+        brand_guidelines = """**BRAND: "Plot Brew"**
+- Newsletter for romantasy readers and writers
+- Visual Style: Warm, magical, whimsical yet sophisticated
+- Color Palette: Warm jewel tones (deep burgundy, forest green, gold) OR soft twilight colors (purple, rose gold, midnight blue)
+- Typography: Mix of elegant serif/script for headlines and clean sans-serif for supporting text
+- Layout Preference: Text centered or slightly left, with magical/fantasy elements framing it
+- Visual Elements: Starbursts, constellation patterns, book spines, quill pens, elegant botanical illustrations (not too busy)
+- Mood: Warm, inviting, creative, slightly magical - like a cozy book club meets fantasy world
+- Branding: Include "PLOT BREW" branding with a small book or quill icon"""
+
+    prompt = f"""{brand_guidelines}
+
+**ARTICLE CONTEXT:**
+{article_text[:1500]}
+
+**TEXT FOR IMAGE:**
+- Headline: "{headline}"
+- Supporting text: "{stat_or_subtext}"
+
+**YOUR TASK:**
+Create a detailed image generation prompt for Gemini AI that will produce a 16:9 Twitter social media graphic. The prompt should:
+
+1. Stay true to the brand guidelines above
+2. Incorporate visual elements that reflect the SPECIFIC content and themes of this article
+3. Suggest contextually relevant imagery, metaphors, or visual elements that connect to the article's topic
+4. Maintain professional quality and brand consistency
+5. Ensure the text ({headline} and {stat_or_subtext}) is clearly legible
+
+Be creative and specific about:
+- What background elements or imagery should appear (that relates to the article topic)
+- What mood/atmosphere should the colors and composition create
+- What visual metaphors or symbols would enhance this specific message
+
+Return ONLY the image generation prompt (no preamble, no explanation). The prompt should start with "Create a..." and be ready to send directly to Gemini.
+"""
+
+    anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=1500,
+        messages=[{
+            "role": "user",
+            "content": prompt
+        }]
+    )
+
+    custom_prompt = response.content[0].text.strip()
+    print(f"✅ Custom prompt generated ({len(custom_prompt)} chars)")
+
+    return custom_prompt
+
+def generate_social_image(article_text: str, headline: str, stat_or_subtext: str, stream: str = "advertising") -> str:
+    """
+    Generate a social media image with text using Gemini, with a custom AI-generated prompt.
+
+    Args:
+        article_text: The original article text (for context)
         headline: The main headline text
         stat_or_subtext: The stat (advertising) or subtext (romantasy)
         stream: Either 'advertising' or 'romantasy'
@@ -100,47 +182,11 @@ def generate_social_image(headline: str, stat_or_subtext: str, stream: str = "ad
 
     print(f"🎨 Generating social media image for {stream} stream...")
 
+    # Generate custom prompt using Claude
+    design_prompt = generate_image_prompt(article_text, headline, stat_or_subtext, stream)
+
     # Create Gemini client
     client = genai.Client(api_key=GOOGLE_API_KEY)
-
-    # Create design prompt based on stream
-    if stream == "advertising":
-        # The Viral Edit - Professional, data-driven, bold
-        design_prompt = f"""Create a professional, bold Twitter social media graphic for an advertising industry newsletter called "The Viral Edit".
-
-Design requirements:
-- Aspect ratio: 16:9 landscape (perfect for Twitter)
-- Style: Modern, clean, professional with bold typography
-- Color scheme: Dark background (deep navy or charcoal) with bright accent colors (electric blue, neon green, or vibrant orange)
-- Layout: Two-thirds rule - text on left 2/3, abstract geometric design on right 1/3
-
-Text to include (must be clearly legible):
-1. Main headline (large, bold, sans-serif): "{headline}"
-2. Supporting stat (medium size, highlighted): "{stat_or_subtext}"
-3. Small "THE VIRAL EDIT" branding in bottom corner
-
-Typography: Use a bold, modern sans-serif font. The headline should be the dominant element.
-Visual elements: Abstract geometric shapes, subtle gradients, or data visualization elements (charts, graphs) in the background. Professional but eye-catching.
-Overall mood: Authoritative, data-driven, trustworthy but with energy."""
-
-    else:  # romantasy
-        # Plot Brew - Warm, magical, community-focused
-        design_prompt = f"""Create a warm, magical Twitter social media graphic for a romantasy writing newsletter called "Plot Brew".
-
-Design requirements:
-- Aspect ratio: 16:9 landscape (perfect for Twitter)
-- Style: Whimsical yet sophisticated, with fantasy elements
-- Color scheme: Warm jewel tones (deep burgundy, forest green, gold accents) or soft twilight colors (purple, rose gold, midnight blue)
-- Layout: Text centered or slightly left, with magical/fantasy elements framing it
-
-Text to include (must be clearly legible):
-1. Main headline (elegant, serif or script font): "{headline}"
-2. Supporting text (complementary font): "{stat_or_subtext}"
-3. Small "PLOT BREW" branding with a small book or quill icon
-
-Typography: Mix of elegant serif for headlines and clean sans-serif for supporting text. Romantic but readable.
-Visual elements: Subtle fantasy elements like starbursts, constellation patterns, book spines, quill pens, or elegant botanical illustrations. Avoid being too busy.
-Overall mood: Warm, inviting, creative, slightly magical. Should feel like a cozy book club meets fantasy world."""
 
     try:
         # Generate image with Gemini
@@ -186,10 +232,11 @@ Examples:
   # Interactive mode (paste article when prompted):
   python generate_twitter_post.py --stream advertising
 
-  # Generate with AI image (requires GOOGLE_API_KEY):
+  # Generate with AI image (requires ANTHROPIC_API_KEY + GOOGLE_API_KEY):
+  # Claude generates a custom image prompt, then Gemini generates the image
   python generate_twitter_post.py --stream advertising --generate-image
 
-  # Pipe from file with image generation:
+  # Pipe from file with AI-generated contextual image:
   cat article.txt | python generate_twitter_post.py --stream romantasy --generate-image
 
   # Pass article as argument:
@@ -232,7 +279,7 @@ Output:
     parser.add_argument(
         "--generate-image",
         action="store_true",
-        help="Generate social media image using Gemini AI (requires GOOGLE_API_KEY)"
+        help="Generate contextual social media image using Claude + Gemini AI (requires ANTHROPIC_API_KEY + GOOGLE_API_KEY)"
     )
 
     args = parser.parse_args()
@@ -288,7 +335,7 @@ Output:
                 if headline and stat_or_subtext:
                     print("\n🎨 GENERATING AI IMAGE...")
                     print("-" * 60)
-                    image_filename = generate_social_image(headline, stat_or_subtext, args.stream)
+                    image_filename = generate_social_image(article_text, headline, stat_or_subtext, args.stream)
                     print(f"🖼️  Image ready: {image_filename}")
                     print("-" * 60)
                 else:
