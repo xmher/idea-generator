@@ -424,6 +424,55 @@ For EACH angle, you must define:
 3. **Professional Value** - Which would most help other romantasy writers?
 4. **Timeliness & Relevance** - Which is most relevant to current romantasy conversations and trends?
 
+## PART 2.5: IDENTIFY AFFILIATE OPPORTUNITIES (For Winning Angle Only)
+
+After selecting the winning angle, evaluate if there are **natural, editorial affiliate opportunities** that would genuinely help romantasy writers without compromising content integrity.
+
+**Affiliate Opportunity Guidelines:**
+
+✅ **GOOD AFFILIATE FIT (Include these):**
+- How-To guides that naturally reference specific writing tools, software, or courses
+- Analysis pieces comparing writing tools/platforms where authors need to choose
+- Craft tutorials that walk through using specific software (Scrivener, Atticus, ProWritingAid)
+- Publishing/marketing guides where tools or resources add value
+- Book recommendation roundups (Amazon Associates for featured books)
+
+**Examples:**
+- Dual-plot structure guide → Scrivener, Atticus, plotting templates
+- Character development tutorial → ProWritingAid, character development courses
+- Self-publishing strategy → Formatting tools (Vellum, Atticus), cover design marketplaces
+- Trope execution analysis → Craft books on romance/fantasy writing, specific romantasy examples (Amazon)
+- BookTok marketing guide → Social media courses, Canva templates
+
+❌ **POOR AFFILIATE FIT (Don't force these):**
+- Opinion pieces without actionable tools
+- Market trend commentary that doesn't involve product decisions
+- Reader psychology analysis without practical applications
+- Content where affiliate mentions would feel promotional
+
+**Output Format:**
+
+If the winning angle has a **natural, helpful affiliate fit**, include:
+
+```
+"affiliate_opportunities": {
+  "has_natural_fit": true,
+  "suggested_categories": ["Writing software", "Craft books", "Online courses"],
+  "example_products": ["Scrivener", "Save the Cat Writes a Novel", "ProWritingAid"],
+  "integration_approach": "Brief 1-2 sentence description of how these would naturally fit into the article"
+}
+```
+
+If there's **NO natural fit** (don't force it), use:
+
+```
+"affiliate_opportunities": {
+  "has_natural_fit": false
+}
+```
+
+**CRITICAL:** Only suggest affiliates when they genuinely help writers solve the problem discussed in the article. Never compromise editorial integrity for monetization.
+
 **Decision-Making Framework:**
 - ✅ **Choose:** Analysis/Deep Dive pieces that break down successful books, reveal patterns, or challenge craft assumptions
 - ✅ **Choose:** Opinion/Hot Take pieces that reveal market insights or reader psychology that others miss
@@ -574,9 +623,32 @@ If a guide does NOT make sense, set both fields to null.
       "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures and trope execution.",
       "angle_expansion": "This deep dive uses the Craft & Structure pillar to reveal actual structural patterns from bestselling romantasy that writers can apply. The analysis format allows me to break down scene ratios, plot thread weaving, and pacing decisions across multiple books—showing writers the concrete formula rather than vague advice about 'balance.'"
   }},
+  "affiliate_opportunities": {{
+      "has_natural_fit": false
+  }},
   "deep_research_prompt": "[Insert the complete, detailed research prompt following the template above. Make it specific to the winning angle, filling in all bracketed placeholders with actual content from the winning angle.]",
   "free_guide_idea": "The Dual-Plot Balance Worksheet for Romantasy Writers",
   "free_guide_description": "A practical worksheet to help you map out your romance arc and fantasy plot side-by-side, with checkpoints to ensure neither plot dominates. Includes examples from bestselling romantasy books showing how they balanced both storylines."
+}}
+
+**Example with Affiliate Opportunities:**
+
+{{
+  "winning_angle": {{
+      "pillar": "Romantasy Craft & Structure",
+      "format": "Craft Guide/How-To",
+      "helpful_angle": "[How-To] The Scrivener Setup I Use to Organize My Romantasy Trilogy (With Templates)",
+      "expert_persona": "Melissa, writing from her craft analyst experience studying successful romantasy structures."
+  }},
+  "affiliate_opportunities": {{
+      "has_natural_fit": true,
+      "suggested_categories": ["Writing software", "Planning templates", "Craft resources"],
+      "example_products": ["Scrivener", "Atticus", "Plotting worksheets", "Save the Cat Writes a Novel"],
+      "integration_approach": "Tutorial naturally walks through the Scrivener setup for managing complex romantasy projects, with template downloads and honest comparison to other writing software options for different writer needs."
+  }},
+  "deep_research_prompt": "[Research prompt here]",
+  "free_guide_idea": "Scrivener Template Bundle for Romantasy Writers",
+  "free_guide_description": "Pre-configured Scrivener project template for dual-plot romantasy novels, with character sheets, worldbuilding sections, and scene organization optimized for romance + fantasy storylines."
 }}
 
 **NOTE ON FREE GUIDE:**
