@@ -22,6 +22,14 @@ except Exception:
     pass
 
 try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    print("INFO: openai not installed. Web search unavailable.")
+    print("Install with: pip install openai")
+
+try:
     from google import genai
     from google.genai import types
     GENAI_AVAILABLE = True
@@ -41,6 +49,7 @@ except ImportError:
 
 # --- Configuration ---
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 APILAYER_API_KEY = os.getenv("APILAYER_API_KEY")
 
@@ -72,6 +81,11 @@ if not ANTHROPIC_API_KEY:
     sys.exit(1)
 
 anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+# Initialize OpenAI client if available
+openai_client = None
+if OPENAI_AVAILABLE and OPENAI_API_KEY:
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Platform character limits
 PLATFORM_LIMITS = {
@@ -114,8 +128,83 @@ def get_user_input(prompt_text: str, default: str = "") -> str:
 
 # ==================== CONTENT GENERATION ====================
 
+def generate_web_search_query() -> str:
+    """Generate a web search query to find trending romantasy discussions"""
+    prompt = """You are a content researcher for "Plot Brew," a romantasy writing advice platform.
+
+Generate ONE web search query to find current trending discussions, questions, or debates in the romantasy writing community.
+
+**Search Query Guidelines:**
+- Focus on recent discussions (Reddit, writing forums, BookTok trends)
+- Look for specific craft questions or debates (love triangles, magic systems, tropes, etc.)
+- Find reader preferences or hot takes
+- Target actionable topics writers struggle with
+
+**Good Search Queries:**
+- "reddit romantasy love triangles how to write"
+- "BookTok romantasy readers hate tropes 2025"
+- "writing forum morally grey characters romantasy debate"
+- "reddit romance writers magic system romance stakes"
+- "romantasy beta readers common complaints world building"
+
+Return ONLY the search query (no quotation marks, no preamble).
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=100,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.content[0].text.strip().strip('"').strip("'")
+
+def generate_interpretive_angle(search_results: str) -> Dict[str, str]:
+    """Analyze search results and create an interpretive writing advice angle"""
+    prompt = f"""You are a content strategist for "Plot Brew," analyzing current discussions in the romantasy community.
+
+**SEARCH RESULTS:**
+{search_results}
+
+**YOUR TASK:**
+Based on these real discussions, create ONE specific, actionable writing advice topic that addresses what the community is talking about.
+
+**Guidelines:**
+- Be INTERPRETIVE: Take the discussion and create practical advice (e.g., Reddit debate about love triangles → "How to Make Love Triangles Work in Romantasy")
+- Address the underlying craft question behind the discussion
+- Make it actionable for writers
+- Keep it specific to romantasy
+
+Return ONLY this JSON format:
+
+{{
+  "topic": "Your writing advice topic (one sentence)",
+  "inspiration": "Brief summary of what discussion inspired this (2-3 sentences)",
+  "angle": "Your unique spin or approach to this topic (1-2 sentences)"
+}}
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    result_text = response.content[0].text.strip()
+
+    # Extract JSON
+    if "```json" in result_text:
+        result_text = result_text.split("```json")[1].split("```")[0].strip()
+    elif "```" in result_text:
+        result_text = result_text.split("```")[1].split("```")[0].strip()
+
+    start = result_text.find("{")
+    end = result_text.rfind("}") + 1
+    if start != -1 and end > start:
+        result_text = result_text[start:end]
+
+    return json.loads(result_text)
+
 def generate_writing_advice_topic() -> str:
-    """Generate a writing advice topic for romantasy writers"""
+    """Generate a writing advice topic for romantasy writers (direct, no research)"""
     prompt = """You are a content strategist for "Plot Brew," a writing advice platform for romantasy authors.
 
 Generate ONE specific, actionable writing advice topic that would be valuable for romantasy writers.
@@ -479,13 +568,183 @@ def main():
     print("="*80)
 
     topic = None
+    topic_context = None
+
     while not topic:
         action = prompt_user(
-            "What would you like to do?",
-            ["Generate a topic automatically", "Provide my own topic"]
+            "How would you like to generate your topic?",
+            [
+                "Research-driven (AI finds trending discussions, then creates topic)",
+                "Direct generation (AI creates topic without research)",
+                "Provide my own topic"
+            ]
         )
 
-        if "Generate" in action:
+        if "Research-driven" in action:
+            # RESEARCH WORKFLOW
+            print("\n🔍 Starting research workflow...")
+
+            search_satisfied = False
+            while not search_satisfied:
+                # Choose research method
+                research_method = prompt_user(
+                    "How would you like to gather research?",
+                    [
+                        "AI generates search query and runs it automatically",
+                        "I'll provide my own research report (paste from Gemini/ChatGPT/etc.)"
+                    ]
+                )
+
+                search_results = None
+
+                if "AI generates" in research_method:
+                    # AUTOMATIC SEARCH WORKFLOW
+                    # Generate search query
+                    print("\n📝 Generating web search query...")
+                    search_query = generate_web_search_query()
+                    print(f"\n🔎 Search Query: {search_query}")
+
+                    if not confirm_action("Run this search?"):
+                        if confirm_action("Try a different approach?"):
+                            continue
+                        else:
+                            break
+
+                    # Run web search
+                    print(f"\n🌐 Searching: {search_query}")
+                    try:
+                        # Use OpenAI with web search if available, fallback to Claude
+                        if openai_client:
+                            print("   Using OpenAI web search...")
+                            try:
+                                search_response = openai_client.chat.completions.create(
+                                    model="gpt-5-mini",
+                                    messages=[{
+                                        "role": "user",
+                                        "content": f"""Search the web for: {search_query}
+
+Find recent discussions, trends, and conversations about this topic in the romantasy/writing community.
+
+Summarize the key findings, including:
+- Main discussions or debates happening
+- Common questions or pain points writers are asking about
+- Trending opinions or hot takes
+- Specific examples of what people are saying
+- URLs or sources where relevant
+
+Focus on actionable insights that could inspire writing advice content."""
+                                    }]
+                                )
+                                search_results = search_response.choices[0].message.content
+                            except Exception as e:
+                                print(f"   OpenAI search failed: {e}, using Claude...")
+                                # Fallback to Claude without web search
+                                search_response = anthropic_client.messages.create(
+                                    model="claude-sonnet-4-5",
+                                    max_tokens=2000,
+                                    messages=[{
+                                        "role": "user",
+                                        "content": f"""Based on your knowledge of romantasy writing trends and common discussions, what would writers typically be asking or debating about regarding: {search_query}
+
+Provide insights about:
+- Common questions or pain points
+- Trending topics or hot takes
+- Typical debates in the community
+- What writers struggle with on this topic
+
+Focus on actionable insights that could inspire writing advice content."""
+                                    }]
+                                )
+                                search_results = search_response.content[0].text
+                        else:
+                            # Use Claude without web search
+                            print("   Using Claude (web search not available)...")
+                            search_response = anthropic_client.messages.create(
+                                model="claude-sonnet-4-5",
+                                max_tokens=2000,
+                                messages=[{
+                                    "role": "user",
+                                    "content": f"""Based on your knowledge of romantasy writing trends and common discussions, what would writers typically be asking or debating about regarding: {search_query}
+
+Provide insights about:
+- Common questions or pain points
+- Trending topics or hot takes
+- Typical debates in the community
+- What writers struggle with on this topic
+
+Focus on actionable insights that could inspire writing advice content."""
+                                }]
+                            )
+                            search_results = search_response.content[0].text
+
+                    except Exception as e:
+                        print(f"\n✗ Search failed: {e}")
+                        if not confirm_action("Try again?"):
+                            break
+                        continue
+
+                else:
+                    # MANUAL RESEARCH INPUT
+                    print("\n📋 Paste your research report below.")
+                    print("   (This can be from Gemini Deep Research, ChatGPT, or any other source)")
+                    print("   Type or paste your research, then press Enter twice when done:\n")
+
+                    lines = []
+                    print(">>> ", end="", flush=True)
+                    while True:
+                        try:
+                            line = input()
+                            if line.strip() == "" and len(lines) > 0 and lines[-1].strip() == "":
+                                # Two empty lines in a row = done
+                                break
+                            lines.append(line)
+                            print(">>> ", end="", flush=True)
+                        except EOFError:
+                            break
+
+                    search_results = "\n".join(lines).strip()
+
+                    if not search_results:
+                        print("\n⚠️  No research provided")
+                        if not confirm_action("Try again?"):
+                            break
+                        continue
+
+                # Show preview of search results
+                if search_results:
+                    print("\n📊 Research Preview:")
+                    print(search_results[:500] + "..." if len(search_results) > 500 else search_results)
+
+                    if not confirm_action("Use this research?"):
+                        if confirm_action("Try a different approach?"):
+                            continue
+                        else:
+                            break
+
+                    # Analyze and create interpretive angle
+                    print("\n🧠 Analyzing research and creating writing advice angle...")
+                    try:
+                        angle_data = generate_interpretive_angle(search_results)
+
+                        print("\n✨ RESEARCH-BASED TOPIC:")
+                        print(f"   Topic: {angle_data['topic']}")
+                        print(f"\n   Inspiration: {angle_data['inspiration']}")
+                        print(f"\n   Your Angle: {angle_data['angle']}")
+
+                        if confirm_action("Use this topic?"):
+                            topic = angle_data['topic']
+                            topic_context = f"Based on: {angle_data['inspiration']}\nAngle: {angle_data['angle']}"
+                            search_satisfied = True
+                        else:
+                            if not confirm_action("Try a different approach?"):
+                                break
+
+                    except Exception as e:
+                        print(f"\n✗ Angle generation failed: {e}")
+                        if not confirm_action("Try again?"):
+                            break
+
+        elif "Direct generation" in action:
             print("\n🎲 Generating writing advice topic...")
             topic = generate_writing_advice_topic()
             print(f"\n✨ Generated Topic:\n   {topic}")
@@ -493,10 +752,17 @@ def main():
             if not confirm_action("Use this topic?"):
                 topic = None
                 continue
-        else:
+
+        else:  # Provide own topic
             topic = get_user_input("Enter your topic")
+            if topic and confirm_action(f"Use this topic: {topic}?"):
+                pass
+            else:
+                topic = None
 
     print(f"\n✅ Final Topic: {topic}")
+    if topic_context:
+        print(f"\n📝 Context:\n{topic_context}")
 
     # STEP 2: Generate Posts
     print("\n" + "="*80)
