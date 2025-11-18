@@ -83,6 +83,10 @@ PLATFORM_LIMITS = {
     "instagram": 2200
 }
 
+# Session management
+SESSION_DIR = "social_sessions"
+PERFORMANCE_DB = "post_performance.json"
+
 # ==================== HELPER FUNCTIONS ====================
 
 def prompt_user(message: str, options: List[str]) -> str:
@@ -144,6 +148,221 @@ def get_multiline_input(prompt_text: str) -> str:
             break
 
     return "\n".join(lines).strip()
+
+# ==================== FEATURE 1: HASHTAG GENERATION ====================
+
+def generate_hashtags(topic: str, platform: str, count: int = 10) -> Dict[str, List[str]]:
+    """Generate strategic hashtags for a topic and platform"""
+
+    platform_guidelines = {
+        "twitter": "Mix of trending + niche. Keep them short and specific.",
+        "threads": "Use sparingly (3-5). Focus on community tags.",
+        "pinterest": "Highly searchable keywords. 10-15 hashtags OK.",
+        "instagram": "Mix of popular + niche. 15-30 hashtags recommended."
+    }
+
+    prompt = f"""You are a social media strategist for "Plot Brew," a romantasy writing advice platform.
+
+**TOPIC:** {topic}
+**PLATFORM:** {platform}
+
+Generate strategic hashtags for this platform.
+
+**Platform Guidelines:** {platform_guidelines.get(platform, "General hashtags")}
+
+**Hashtag Strategy:**
+- Mix of HIGH-TRAFFIC tags (competitive but discoverable)
+- NICHE tags (lower traffic, highly targeted romantasy audience)
+- COMMUNITY tags (BookTok, Bookstagram, writing communities)
+- GENRE tags (romantasy, fantasy romance, etc.)
+
+**For Romantasy Content:**
+- Writing craft tags (#WritingTips, #AmWriting, #WritingCommunity)
+- Genre tags (#Romantasy, #FantasyRomance, #BookTok)
+- Niche craft tags (#CharacterDevelopment, #WorldBuilding, #WritingMagicSystems)
+- Reader community tags (#BookstagramCommunity, #RomanceReaders)
+
+Return ONLY this JSON format:
+
+{{
+  "high_traffic": ["#tag1", "#tag2", ...],
+  "niche": ["#tag3", "#tag4", ...],
+  "community": ["#tag5", "#tag6", ...],
+  "recommended": ["#tag", "#tag", ...] // Your top {count} picks in priority order
+}}
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return extract_json(response.content[0].text)
+
+# ==================== FEATURE 2: SESSION SAVE/RESUME ====================
+
+def save_session(session_data: Dict, phase: str) -> str:
+    """Save current session to resume later"""
+    if not os.path.exists(SESSION_DIR):
+        os.makedirs(SESSION_DIR)
+
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+    filename = f"{SESSION_DIR}/session_{timestamp}.json"
+
+    session_data['current_phase'] = phase
+    session_data['saved_at'] = datetime.now(timezone.utc).isoformat()
+
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(session_data, f, indent=2, ensure_ascii=False)
+
+    return filename
+
+def load_latest_session() -> Optional[Dict]:
+    """Load most recent saved session"""
+    if not os.path.exists(SESSION_DIR):
+        return None
+
+    sessions = [f for f in os.listdir(SESSION_DIR) if f.startswith('session_') and f.endswith('.json')]
+    if not sessions:
+        return None
+
+    # Get most recent
+    sessions.sort(reverse=True)
+    latest = sessions[0]
+
+    with open(os.path.join(SESSION_DIR, latest), 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def list_saved_sessions() -> List[Tuple[str, Dict]]:
+    """List all saved sessions with metadata"""
+    if not os.path.exists(SESSION_DIR):
+        return []
+
+    sessions = []
+    for filename in os.listdir(SESSION_DIR):
+        if filename.startswith('session_') and filename.endswith('.json'):
+            filepath = os.path.join(SESSION_DIR, filename)
+            with open(filepath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                sessions.append((filename, data))
+
+    sessions.sort(key=lambda x: x[1].get('saved_at', ''), reverse=True)
+    return sessions
+
+# ==================== FEATURE 3: A/B TESTING ====================
+
+def draft_post_variations(topic: str, platform: str, research: Optional[str] = None, count: int = 3) -> List[str]:
+    """Generate multiple post variations for A/B testing"""
+
+    research_context = f"\n\n**RESEARCH CONTEXT:**\n{research}" if research else ""
+
+    platform_specs = {
+        "twitter": "280 chars max - Hook + craft insight + question",
+        "threads": "500 chars max - Personal story + insights + community question",
+        "pinterest": "500 chars - Educational, keyword-rich, list format",
+        "instagram": "2200 chars max - Story-driven + 5-7 tips + hashtags"
+    }
+
+    prompt = f"""You are creating {count} different variations of a social media post for "Plot Brew."
+
+**TOPIC:** {topic}{research_context}
+**PLATFORM:** {platform} - {platform_specs.get(platform, "")}
+
+**YOUR VOICE:**
+- Personal and vulnerable (share writing journey)
+- Celebratory of romantasy (treat it with intellectual respect)
+- Community-focused ("we" language, not "you")
+- Geeky enthusiasm about tropes and craft
+- Relatable struggles of writing life
+
+**CREATE {count} VARIATIONS with different approaches:**
+
+1. **Variation 1 - Educational/How-To**
+   Lead with practical tips, step-by-step approach
+
+2. **Variation 2 - Personal Story/Vulnerable**
+   Start with your own struggle or journey, then share the lesson
+
+3. **Variation 3 - Provocative/Hot Take**
+   Bold statement or controversial angle (but supportive), challenge assumptions
+
+Return ONLY this JSON format:
+
+{{
+  "variations": [
+    {{
+      "style": "educational",
+      "post": "Your post text here"
+    }},
+    {{
+      "style": "personal",
+      "post": "Your post text here"
+    }},
+    {{
+      "style": "provocative",
+      "post": "Your post text here"
+    }}
+  ]
+}}
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2000,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    result = extract_json(response.content[0].text)
+    return result.get('variations', [])
+
+def track_post_performance(topic: str, platform: str, variation_style: str, post_text: str):
+    """Track which variations get selected for future learning"""
+    if not os.path.exists(PERFORMANCE_DB):
+        data = {"selections": []}
+    else:
+        with open(PERFORMANCE_DB, 'r') as f:
+            data = json.load(f)
+
+    data["selections"].append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "topic": topic,
+        "platform": platform,
+        "variation_style": variation_style,
+        "post_length": len(post_text)
+    })
+
+    with open(PERFORMANCE_DB, 'w') as f:
+        json.dump(data, f, indent=2)
+
+def get_performance_insights() -> Dict:
+    """Analyze historical performance to guide future content"""
+    if not os.path.exists(PERFORMANCE_DB):
+        return {"message": "No performance data yet"}
+
+    with open(PERFORMANCE_DB, 'r') as f:
+        data = json.load(f)
+
+    selections = data.get("selections", [])
+    if not selections:
+        return {"message": "No selections tracked yet"}
+
+    # Analyze which styles perform best per platform
+    platform_styles = {}
+    for sel in selections:
+        platform = sel['platform']
+        style = sel['variation_style']
+
+        if platform not in platform_styles:
+            platform_styles[platform] = {}
+
+        platform_styles[platform][style] = platform_styles[platform].get(style, 0) + 1
+
+    return {
+        "total_posts": len(selections),
+        "platform_style_preferences": platform_styles,
+        "message": "This data shows which post styles you prefer per platform"
+    }
 
 # ==================== PHASE 1: TOPIC BRAINSTORMING ====================
 
@@ -530,10 +749,41 @@ def main():
     print("Plot Brew - Multi-Topic Content Generation")
     print("="*80)
 
+    # Check for saved sessions
+    saved_sessions = list_saved_sessions()
+    selected_topics = []
+    start_phase = "brainstorm"
+
+    if saved_sessions:
+        print(f"\n💾 Found {len(saved_sessions)} saved session(s)")
+        if confirm_action("Resume from a saved session?"):
+            # Show sessions
+            for i, (filename, data) in enumerate(saved_sessions[:5], 1):
+                saved_at = data.get('saved_at', 'Unknown')
+                phase = data.get('current_phase', 'Unknown')
+                topic_count = len(data.get('selected_topics', []))
+                print(f"  {i}. {saved_at[:19]} - Phase: {phase} - {topic_count} topics")
+
+            choice = input("\nEnter session number to resume (or 'n' to start fresh): ").strip()
+            if choice.isdigit() and 1 <= int(choice) <= len(saved_sessions):
+                session_data = saved_sessions[int(choice) - 1][1]
+                selected_topics = session_data.get('selected_topics', [])
+                start_phase = session_data.get('current_phase', 'brainstorm')
+                print(f"\n✅ Resumed session with {len(selected_topics)} topics at phase: {start_phase}")
+
+    # Show performance insights if available
+    insights = get_performance_insights()
+    if insights.get('total_posts', 0) > 0:
+        print(f"\n📊 PERFORMANCE INSIGHTS ({insights['total_posts']} posts tracked):")
+        for platform, styles in insights.get('platform_style_preferences', {}).items():
+            top_style = max(styles, key=styles.get)
+            print(f"  {platform}: You prefer '{top_style}' style ({styles[top_style]} times)")
+
     # PHASE 1: BRAINSTORM TOPICS
-    print("\n" + "="*80)
-    print("PHASE 1: TOPIC BRAINSTORMING")
-    print("="*80)
+    if start_phase == "brainstorm":
+        print("\n" + "="*80)
+        print("PHASE 1: TOPIC BRAINSTORMING")
+        print("="*80)
 
     print("\n🧠 Brainstorming topics...")
     direct_topics = brainstorm_direct_topics(5)
@@ -623,48 +873,109 @@ def main():
                 topic_data['research'] = research
                 print("✓ Research saved")
 
-    # PHASE 4: DRAFT POSTS (with feedback loop)
+    # Save session after research
+    if confirm_action("\n💾 Save session before continuing?"):
+        session_file = save_session({'selected_topics': selected_topics}, 'post_drafting')
+        print(f"✓ Session saved: {session_file}")
+
+    # PHASE 4: DRAFT POSTS (with A/B testing & feedback loop)
     print("\n" + "="*80)
-    print("PHASE 4: POST DRAFTING")
+    print("PHASE 4: POST DRAFTING (A/B TESTING)")
     print("="*80)
 
     for i, topic_data in enumerate(selected_topics, 1):
         print(f"\n--- TOPIC {i}/{len(selected_topics)}: {topic_data['topic']} ---")
+        topic_data['posts'] = {}
+        topic_data['hashtags'] = {}
 
-        print(f"🖊️  Drafting posts for {', '.join(topic_data['platforms'])}...")
-        posts = draft_social_posts(
-            topic_data['topic'],
-            topic_data['platforms'],
-            topic_data.get('research')
-        )
-        topic_data['posts'] = posts
-
-        # Show drafts and get feedback
+        # Generate posts for each platform
         for platform in topic_data['platforms']:
             satisfied = False
-            current_post = posts.get(platform, "")
 
             while not satisfied:
                 print(f"\n{platform.upper()}:")
-                print(current_post)
-                print(f"Characters: {len(current_post)}/{PLATFORM_LIMITS[platform]}")
+
+                # A/B TESTING: Generate 3 variations
+                print("🎨 Generating 3 variations for A/B testing...")
+                variations = draft_post_variations(
+                    topic_data['topic'],
+                    platform,
+                    topic_data.get('research'),
+                    count=3
+                )
+
+                if not variations:
+                    print("✗ Failed to generate variations")
+                    if not confirm_action("Try again?"):
+                        break
+                    continue
+
+                # Show all variations
+                print("\n" + "─"*60)
+                for j, var in enumerate(variations, 1):
+                    style = var.get('style', 'unknown')
+                    post_text = var.get('post', '')
+                    print(f"\nVARIATION {j} - {style.upper()}")
+                    print(post_text)
+                    print(f"Characters: {len(post_text)}/{PLATFORM_LIMITS[platform]}")
+                    print("─"*60)
 
                 action = prompt_user(
                     f"What would you like to do?",
-                    ["Approve", "Give feedback for revision", "Skip this platform"]
+                    [
+                        "Select variation 1",
+                        "Select variation 2",
+                        "Select variation 3",
+                        "Give feedback and regenerate all",
+                        "Skip this platform"
+                    ]
                 )
 
-                if "Approve" in action:
+                if "Select variation" in action:
+                    var_num = int(action.split()[-1]) - 1
+                    selected_var = variations[var_num]
+                    current_post = selected_var.get('post', '')
+
+                    # Track selection for learning
+                    track_post_performance(
+                        topic_data['topic'],
+                        platform,
+                        selected_var.get('style', 'unknown'),
+                        current_post
+                    )
+
+                    # Generate hashtags
+                    print(f"\n🏷️  Generating hashtags for {platform}...")
+                    hashtags_data = generate_hashtags(topic_data['topic'], platform)
+                    recommended = hashtags_data.get('recommended', [])
+
+                    print(f"\n📌 RECOMMENDED HASHTAGS ({len(recommended)}):")
+                    print(" ".join(recommended))
+
+                    if confirm_action("\nUse these hashtags?"):
+                        topic_data['hashtags'][platform] = recommended
+                        # Append to Instagram post if applicable
+                        if platform == "instagram" and recommended:
+                            current_post += "\n\n" + " ".join(recommended)
+
                     topic_data['posts'][platform] = current_post
                     satisfied = True
+
                 elif "feedback" in action:
                     feedback = get_multiline_input("Enter your feedback:")
-                    print("✏️  Revising...")
-                    current_post = revise_post(current_post, platform, feedback)
+                    print("✏️  Regenerating with feedback...")
+                    # This will loop and regenerate
+                    continue
+
                 else:  # Skip
-                    del topic_data['posts'][platform]
-                    topic_data['platforms'].remove(platform)
+                    if platform in topic_data['platforms']:
+                        topic_data['platforms'].remove(platform)
                     satisfied = True
+
+    # Save session after posts
+    if confirm_action("\n💾 Save session before image generation?"):
+        session_file = save_session({'selected_topics': selected_topics}, 'image_generation')
+        print(f"✓ Session saved: {session_file}")
 
     # PHASE 5: IMAGE GENERATION (with feedback loop)
     print("\n" + "="*80)
@@ -727,7 +1038,14 @@ def main():
         for platform in topic_data['platforms']:
             post = topic_data['posts'].get(platform, "")
             image = topic_data['images'].get(platform)
-            print(f"   • {platform}: {len(post)} chars" + (" + image" if image else ""))
+            hashtags = topic_data.get('hashtags', {}).get(platform, [])
+            extras = []
+            if image:
+                extras.append("image")
+            if hashtags:
+                extras.append(f"{len(hashtags)} hashtags")
+            extras_str = " + " + ", ".join(extras) if extras else ""
+            print(f"   • {platform}: {len(post)} chars{extras_str}")
 
     if not confirm_action("\n✅ Ready to post?"):
         print("\n💾 Content saved. Exiting without posting.")
