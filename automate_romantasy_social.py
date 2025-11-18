@@ -298,58 +298,103 @@ def generate_image(image_prompt: str, platform: str) -> Optional[str]:
         print(f"  ✗ Image generation failed: {e}")
         return None
 
-def post_to_social_media(platform: str, text: str, image_path: Optional[str] = None) -> bool:
+def format_image_for_platform(image_path: str, platform: str) -> Optional[str]:
     """
-    Post to social media using apilayer Social Media Assets Generator API
-
-    Note: This is a placeholder implementation. You'll need to:
-    1. Check apilayer's actual API documentation
-    2. May need different APIs for different platforms
-    3. Configure authentication for each platform
+    Format image for specific platform using apilayer Social Media Assets Generator API
+    This API optimizes images for platform-specific dimensions
     """
     if not APILAYER_API_KEY:
-        print(f"  ⚠️  APILAYER_API_KEY not configured. Skipping {platform} post.")
-        return False
+        print(f"  ⚠️  APILAYER_API_KEY not configured. Using original image.")
+        return image_path
 
-    print(f"📤 Posting to {platform}...")
+    if not image_path or not os.path.exists(image_path):
+        print(f"  ⚠️  Image not found: {image_path}")
+        return None
 
-    # This is a placeholder - actual implementation depends on apilayer API structure
-    # You may need to use platform-specific APIs or OAuth tokens
+    print(f"  📐 Formatting image for {platform}...")
 
+    # Map platforms to apilayer endpoints
+    platform_endpoints = {
+        "twitter": "twitter",
+        "pinterest": "pinterest",
+        "instagram": "instagram",
+        "threads": "twitter"  # Use Twitter format for Threads (16:9)
+    }
+
+    endpoint = platform_endpoints.get(platform)
+    if not endpoint:
+        print(f"  ⚠️  No formatting endpoint for {platform}")
+        return image_path
+
+    try:
+        # Upload image to apilayer for formatting
+        with open(image_path, 'rb') as f:
+            files = {'body': f}
+            headers = {'apikey': APILAYER_API_KEY}
+
+            response = requests.post(
+                f"https://api.apilayer.com/social_media_assets_generator/upload/{endpoint}",
+                headers=headers,
+                files=files,
+                timeout=30
+            )
+
+            if response.status_code == 200:
+                # Save formatted image
+                formatted_filename = image_path.replace('.png', f'_formatted_{platform}.png')
+                with open(formatted_filename, 'wb') as out:
+                    out.write(response.content)
+                print(f"  ✓ Image formatted: {formatted_filename}")
+                return formatted_filename
+            else:
+                print(f"  ✗ Formatting failed ({response.status_code}): {response.text[:100]}")
+                return image_path
+
+    except Exception as e:
+        print(f"  ✗ Image formatting error: {e}")
+        return image_path
+
+def save_post_for_manual_publishing(platform: str, text: str, image_path: Optional[str] = None) -> bool:
     """
-    Example structure (adjust based on actual API):
+    Save post content to file for manual publishing
 
-    headers = {
-        "apikey": APILAYER_API_KEY
-    }
+    NOTE: Auto-posting requires platform-specific APIs:
+    - Twitter: Twitter API v2 with OAuth 2.0
+    - Threads: Meta Graph API
+    - Pinterest: Pinterest API v5
+    - Instagram: Meta Graph API (or manual via email)
 
-    data = {
-        "platform": platform,
-        "text": text,
-        "image": image_path
-    }
+    This function saves content locally for manual posting.
+    """
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+    output_file = f"{platform}_post_{timestamp}.txt"
 
-    response = requests.post(
-        "https://api.apilayer.com/social_media_assets_generator/post",
-        headers=headers,
-        json=data
-    )
+    content = f"""Platform: {platform.upper()}
+Generated: {datetime.now(timezone.utc).isoformat()}
 
-    if response.status_code == 200:
-        print(f"  ✓ Posted to {platform}")
+POST TEXT:
+{text}
+
+IMAGE:
+{image_path if image_path else 'No image'}
+
+---
+TO POST MANUALLY:
+1. Open {platform}
+2. Create new post
+3. Upload image: {image_path}
+4. Copy/paste text above
+5. Post!
+"""
+
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"  💾 Post saved to: {output_file}")
         return True
-    else:
-        print(f"  ✗ Failed to post to {platform}: {response.text}")
+    except Exception as e:
+        print(f"  ✗ Failed to save post: {e}")
         return False
-    """
-
-    # For now, just save to file for manual posting
-    print(f"  💾 [DRY RUN] Would post to {platform}:")
-    print(f"     Text: {text[:100]}...")
-    if image_path:
-        print(f"     Image: {image_path}")
-
-    return True
 
 def email_instagram_post(text: str, image_path: Optional[str] = None) -> bool:
     """
@@ -420,29 +465,41 @@ def main():
 This script will:
 1. Generate a writing advice topic (or use provided topic)
 2. Create platform-specific posts for Twitter, Threads, Pinterest, Instagram
-3. Generate custom images for each platform using Gemini
-4. Auto-post to Twitter, Threads, Pinterest (via apilayer API)
-5. Email Instagram post for manual posting
+3. Generate custom images for each platform using Gemini AI
+4. Format images for each platform using apilayer API (optimizes dimensions)
+5. Save posts for manual publishing (or email Instagram)
+
+NOTE: This script PREPARES content but does NOT auto-post to platforms.
+Auto-posting requires platform-specific APIs and OAuth:
+  - Twitter: Twitter API v2 + OAuth 2.0
+  - Threads: Meta Graph API
+  - Pinterest: Pinterest API v5
+  - Instagram: Meta Graph API (or manual)
+
+The script saves formatted posts and images for you to publish manually.
 
 Environment Variables Required:
-  ANTHROPIC_API_KEY - For content generation
-  GOOGLE_API_KEY - For image generation (Gemini)
-  APILAYER_API_KEY - For social media posting (optional)
-  EMAIL_FROM, EMAIL_TO - For Instagram email delivery
-  SMTP_USER, SMTP_PASSWORD - Email credentials
+  ANTHROPIC_API_KEY - For content generation (required)
+  GOOGLE_API_KEY - For image generation with Gemini (required)
+  APILAYER_API_KEY - For image formatting (optional but recommended)
+  EMAIL_FROM, EMAIL_TO - For Instagram email delivery (optional)
+  SMTP_USER, SMTP_PASSWORD - Email credentials (optional)
 
 Examples:
-  # Auto-generate topic and post to all platforms:
+  # Generate content for all platforms:
   python automate_romantasy_social.py
 
   # Use specific topic:
   python automate_romantasy_social.py --topic "How to Write Enemies-to-Lovers Banter"
 
-  # Generate content only, don't post:
+  # Preview without saving files:
   python automate_romantasy_social.py --dry-run
 
   # Skip image generation:
   python automate_romantasy_social.py --no-images
+
+  # Only specific platforms:
+  python automate_romantasy_social.py --platforms twitter pinterest
         """
     )
 
@@ -521,26 +578,43 @@ Examples:
                 images[platform] = image_path
             print()
 
-    # Step 4: Post to platforms
+    # Step 4: Format images and prepare for posting
+    formatted_images = {}
+    if not args.no_images and images:
+        print("="*80)
+        print("FORMATTING IMAGES FOR PLATFORMS")
+        print("="*80 + "\n")
+
+        for platform in args.platforms:
+            image_path = images.get(platform)
+            if image_path:
+                print(f"Formatting {platform} image...")
+                formatted_path = format_image_for_platform(image_path, platform)
+                if formatted_path:
+                    formatted_images[platform] = formatted_path
+                print()
+
+    # Step 5: Save posts for publishing
     if not args.dry_run:
         print("="*80)
-        print("POSTING TO SOCIAL MEDIA")
+        print("PREPARING POSTS FOR PUBLISHING")
         print("="*80 + "\n")
 
         for platform in args.platforms:
             post_text = posts.get(platform, "")
-            image_path = images.get(platform)
+            image_path = formatted_images.get(platform) or images.get(platform)
 
             if platform == "instagram":
-                # Email Instagram instead of posting
+                # Email Instagram post
                 email_instagram_post(post_text, image_path)
             else:
-                # Post to other platforms
-                post_to_social_media(platform, post_text, image_path)
+                # Save other platforms for manual posting
+                # TODO: Integrate platform-specific APIs for auto-posting
+                save_post_for_manual_publishing(platform, post_text, image_path)
 
             print()
 
-    # Step 5: Save report
+    # Step 6: Save report
     timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     report_file = f"social_media_report_{timestamp}.json"
 
@@ -550,6 +624,7 @@ Examples:
         "platforms": args.platforms,
         "posts": posts,
         "images": images,
+        "formatted_images": formatted_images,
         "dry_run": args.dry_run
     }
 
