@@ -586,29 +586,42 @@ def main():
 
             search_satisfied = False
             while not search_satisfied:
-                # Generate search query
-                print("\n📝 Generating web search query...")
-                search_query = generate_web_search_query()
-                print(f"\n🔎 Search Query: {search_query}")
+                # Choose research method
+                research_method = prompt_user(
+                    "How would you like to gather research?",
+                    [
+                        "AI generates search query and runs it automatically",
+                        "I'll provide my own research report (paste from Gemini/ChatGPT/etc.)"
+                    ]
+                )
 
-                if not confirm_action("Run this search?"):
-                    if confirm_action("Generate a different search query?"):
-                        continue
-                    else:
-                        break
+                search_results = None
 
-                # Run web search
-                print(f"\n🌐 Searching: {search_query}")
-                try:
-                    # Use OpenAI with web search if available, fallback to Claude
-                    if openai_client:
-                        print("   Using OpenAI web search...")
-                        try:
-                            search_response = openai_client.chat.completions.create(
-                                model="gpt-5-mini",
-                                messages=[{
-                                    "role": "user",
-                                    "content": f"""Search the web for: {search_query}
+                if "AI generates" in research_method:
+                    # AUTOMATIC SEARCH WORKFLOW
+                    # Generate search query
+                    print("\n📝 Generating web search query...")
+                    search_query = generate_web_search_query()
+                    print(f"\n🔎 Search Query: {search_query}")
+
+                    if not confirm_action("Run this search?"):
+                        if confirm_action("Try a different approach?"):
+                            continue
+                        else:
+                            break
+
+                    # Run web search
+                    print(f"\n🌐 Searching: {search_query}")
+                    try:
+                        # Use OpenAI with web search if available, fallback to Claude
+                        if openai_client:
+                            print("   Using OpenAI web search...")
+                            try:
+                                search_response = openai_client.chat.completions.create(
+                                    model="gpt-5-mini",
+                                    messages=[{
+                                        "role": "user",
+                                        "content": f"""Search the web for: {search_query}
 
 Find recent discussions, trends, and conversations about this topic in the romantasy/writing community.
 
@@ -620,12 +633,32 @@ Summarize the key findings, including:
 - URLs or sources where relevant
 
 Focus on actionable insights that could inspire writing advice content."""
-                                }]
-                            )
-                            search_results = search_response.choices[0].message.content
-                        except Exception as e:
-                            print(f"   OpenAI search failed: {e}, using Claude...")
-                            # Fallback to Claude without web search
+                                    }]
+                                )
+                                search_results = search_response.choices[0].message.content
+                            except Exception as e:
+                                print(f"   OpenAI search failed: {e}, using Claude...")
+                                # Fallback to Claude without web search
+                                search_response = anthropic_client.messages.create(
+                                    model="claude-sonnet-4-5",
+                                    max_tokens=2000,
+                                    messages=[{
+                                        "role": "user",
+                                        "content": f"""Based on your knowledge of romantasy writing trends and common discussions, what would writers typically be asking or debating about regarding: {search_query}
+
+Provide insights about:
+- Common questions or pain points
+- Trending topics or hot takes
+- Typical debates in the community
+- What writers struggle with on this topic
+
+Focus on actionable insights that could inspire writing advice content."""
+                                    }]
+                                )
+                                search_results = search_response.content[0].text
+                        else:
+                            # Use Claude without web search
+                            print("   Using Claude (web search not available)...")
                             search_response = anthropic_client.messages.create(
                                 model="claude-sonnet-4-5",
                                 max_tokens=2000,
@@ -643,57 +676,73 @@ Focus on actionable insights that could inspire writing advice content."""
                                 }]
                             )
                             search_results = search_response.content[0].text
-                    else:
-                        # Use Claude without web search
-                        print("   Using Claude (web search not available)...")
-                        search_response = anthropic_client.messages.create(
-                            model="claude-sonnet-4-5",
-                            max_tokens=2000,
-                            messages=[{
-                                "role": "user",
-                                "content": f"""Based on your knowledge of romantasy writing trends and common discussions, what would writers typically be asking or debating about regarding: {search_query}
 
-Provide insights about:
-- Common questions or pain points
-- Trending topics or hot takes
-- Typical debates in the community
-- What writers struggle with on this topic
+                    except Exception as e:
+                        print(f"\n✗ Search failed: {e}")
+                        if not confirm_action("Try again?"):
+                            break
+                        continue
 
-Focus on actionable insights that could inspire writing advice content."""
-                            }]
-                        )
-                        search_results = search_response.content[0].text
+                else:
+                    # MANUAL RESEARCH INPUT
+                    print("\n📋 Paste your research report below.")
+                    print("   (This can be from Gemini Deep Research, ChatGPT, or any other source)")
+                    print("   Type or paste your research, then press Enter twice when done:\n")
 
-                    print("\n📊 Search Results Preview:")
+                    lines = []
+                    print(">>> ", end="", flush=True)
+                    while True:
+                        try:
+                            line = input()
+                            if line.strip() == "" and len(lines) > 0 and lines[-1].strip() == "":
+                                # Two empty lines in a row = done
+                                break
+                            lines.append(line)
+                            print(">>> ", end="", flush=True)
+                        except EOFError:
+                            break
+
+                    search_results = "\n".join(lines).strip()
+
+                    if not search_results:
+                        print("\n⚠️  No research provided")
+                        if not confirm_action("Try again?"):
+                            break
+                        continue
+
+                # Show preview of search results
+                if search_results:
+                    print("\n📊 Research Preview:")
                     print(search_results[:500] + "..." if len(search_results) > 500 else search_results)
 
-                    if not confirm_action("Use these search results?"):
-                        if confirm_action("Try a different search?"):
+                    if not confirm_action("Use this research?"):
+                        if confirm_action("Try a different approach?"):
                             continue
                         else:
                             break
 
                     # Analyze and create interpretive angle
-                    print("\n🧠 Analyzing discussions and creating writing advice angle...")
-                    angle_data = generate_interpretive_angle(search_results)
+                    print("\n🧠 Analyzing research and creating writing advice angle...")
+                    try:
+                        angle_data = generate_interpretive_angle(search_results)
 
-                    print("\n✨ RESEARCH-BASED TOPIC:")
-                    print(f"   Topic: {angle_data['topic']}")
-                    print(f"\n   Inspiration: {angle_data['inspiration']}")
-                    print(f"\n   Your Angle: {angle_data['angle']}")
+                        print("\n✨ RESEARCH-BASED TOPIC:")
+                        print(f"   Topic: {angle_data['topic']}")
+                        print(f"\n   Inspiration: {angle_data['inspiration']}")
+                        print(f"\n   Your Angle: {angle_data['angle']}")
 
-                    if confirm_action("Use this topic?"):
-                        topic = angle_data['topic']
-                        topic_context = f"Based on: {angle_data['inspiration']}\nAngle: {angle_data['angle']}"
-                        search_satisfied = True
-                    else:
-                        if not confirm_action("Try a different search?"):
+                        if confirm_action("Use this topic?"):
+                            topic = angle_data['topic']
+                            topic_context = f"Based on: {angle_data['inspiration']}\nAngle: {angle_data['angle']}"
+                            search_satisfied = True
+                        else:
+                            if not confirm_action("Try a different approach?"):
+                                break
+
+                    except Exception as e:
+                        print(f"\n✗ Angle generation failed: {e}")
+                        if not confirm_action("Try again?"):
                             break
-
-                except Exception as e:
-                    print(f"\n✗ Search failed: {e}")
-                    if not confirm_action("Try again?"):
-                        break
 
         elif "Direct generation" in action:
             print("\n🎲 Generating writing advice topic...")
