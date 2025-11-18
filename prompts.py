@@ -396,6 +396,53 @@ For EACH angle, you must define:
 3. **Professional Value** - Which would most help other advertising professionals?
 4. **Timeliness & Relevance** - Which is most relevant to current industry conversations?
 
+## PART 2.5: IDENTIFY AFFILIATE OPPORTUNITIES (For Winning Angle Only)
+
+After selecting the winning angle, evaluate if there are **natural, editorial affiliate opportunities** that would genuinely help readers without compromising content integrity.
+
+**Affiliate Opportunity Guidelines:**
+
+✅ **GOOD AFFILIATE FIT (Include these):**
+- How-To guides that naturally reference specific tools, software, or courses
+- Analysis pieces comparing tools/platforms where readers need to choose
+- Tutorials that walk through using specific software or services
+- Training/education content where courses add value
+
+**Examples:**
+- Python automation guide → Python courses (DataCamp, Coursera), API tools
+- Analytics dashboards tutorial → PowerBI courses, reporting tools (Supermetrics)
+- Ad verification methodology → Verification platforms (DoubleVerify, IAS)
+- Media buying strategy → Training programs, pitch templates, budgeting tools
+
+❌ **POOR AFFILIATE FIT (Don't force these):**
+- Opinion pieces without actionable tools
+- Investigative journalism focused on exposing problems
+- News commentary that doesn't involve product decisions
+- Content where affiliate mentions would feel promotional
+
+**Output Format:**
+
+If the winning angle has a **natural, helpful affiliate fit**, include:
+
+```
+"affiliate_opportunities": {
+  "has_natural_fit": true,
+  "suggested_categories": ["Online courses", "Analytics tools", "Automation software"],
+  "example_products": ["DataCamp Python courses", "Supermetrics", "Zapier"],
+  "integration_approach": "Brief 1-2 sentence description of how these would naturally fit into the article"
+}
+```
+
+If there's **NO natural fit** (don't force it), use:
+
+```
+"affiliate_opportunities": {
+  "has_natural_fit": false
+}
+```
+
+**CRITICAL:** Only suggest affiliates when they genuinely help readers solve the problem discussed in the article. Never compromise editorial integrity for monetization.
+
 **Decision-Making Framework:**
 - ✅ **Choose:** Investigative pieces that audit claims, expose gaps, or challenge assumptions
 - ✅ **Choose:** Opinion/thought pieces that reveal hidden implications or insider perspectives
@@ -511,6 +558,27 @@ Provide findings in structured sections matching the requirements above. Include
       "expert_persona": "Melissa, writing from her media auditor experience at a global accountability firm.",
       "angle_expansion": "This investigative approach leverages the Media Accountability pillar to systematically audit Google's transparency claims using the same methodology I used when auditing major advertiser spend. By combining the investigative format with auditor expertise, we can identify measurement gaps and verification blind spots that platform marketing glosses over—exactly the kind of critical analysis advertisers and agencies need before adjusting investment strategies."
   }},
+  "affiliate_opportunities": {{
+      "has_natural_fit": false
+  }},
   "deep_research_prompt": "[Insert the complete, detailed research prompt following the template above. Make it specific to the winning angle, filling in all bracketed placeholders with actual content from the winning angle.]"
+}}
+
+**Example with Affiliate Opportunities:**
+
+{{
+  "winning_angle": {{
+      "pillar": "Advertising Analytics & Automation",
+      "format": "Expert How-To/Guide",
+      "helpful_angle": "[How-To] The Python Script I Built to Automate 20 Hours of Advertising Reporting Per Week",
+      "expert_persona": "Melissa, writing from her in-house experience building advertising analytics automation."
+  }},
+  "affiliate_opportunities": {{
+      "has_natural_fit": true,
+      "suggested_categories": ["Python courses", "API management tools", "Automation platforms"],
+      "example_products": ["DataCamp Python for Data Analysis", "Postman API tool", "Zapier", "Make (Integromat)"],
+      "integration_approach": "Tutorial naturally walks through the Python automation process, with honest recommendations for learning resources and API tools that make the implementation easier for readers new to automation."
+  }},
+  "deep_research_prompt": "[Research prompt here]"
 }}
 """ # <-- .format() call removed
