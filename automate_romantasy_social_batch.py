@@ -364,6 +364,360 @@ def get_performance_insights() -> Dict:
         "message": "This data shows which post styles you prefer per platform"
     }
 
+# ==================== FEATURE 4: CONTENT CALENDAR & SCHEDULING ====================
+
+def suggest_posting_schedule(topics: List[Dict], days: int = 7) -> List[Dict]:
+    """Create optimal posting schedule across platforms"""
+
+    # Optimal posting times per platform (EST)
+    optimal_times = {
+        "twitter": [(9, 0), (12, 0), (15, 0), (18, 0)],  # 9am, 12pm, 3pm, 6pm
+        "threads": [(10, 0), (14, 0), (19, 0)],  # 10am, 2pm, 7pm
+        "pinterest": [(20, 0), (21, 0)],  # 8pm, 9pm (evening browsing)
+        "instagram": [(11, 0), (19, 0), (21, 0)]  # 11am, 7pm, 9pm
+    }
+
+    # Day names
+    day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+    schedule = []
+    current_day = 0
+
+    for topic in topics:
+        for platform in topic.get('platforms', []):
+            if platform not in topic.get('posts', {}):
+                continue
+
+            # Get optimal times for this platform
+            times = optimal_times.get(platform, [(12, 0)])
+
+            # Pick time based on index
+            time_idx = len([s for s in schedule if s['platform'] == platform]) % len(times)
+            hour, minute = times[time_idx]
+
+            # Assign to day
+            day = day_names[current_day % days]
+
+            schedule.append({
+                "day": day,
+                "day_num": current_day % days,
+                "time": f"{hour:02d}:{minute:02d}",
+                "hour": hour,
+                "platform": platform,
+                "topic": topic['topic'],
+                "post": topic['posts'][platform],
+                "image": topic.get('images', {}).get(platform),
+                "hashtags": topic.get('hashtags', {}).get(platform, [])
+            })
+
+            current_day += 1
+
+    # Sort by day, then time
+    schedule.sort(key=lambda x: (x['day_num'], x['hour']))
+
+    return schedule
+
+def export_schedule_csv(schedule: List[Dict], filename: str = None) -> str:
+    """Export schedule to CSV for Buffer/Hootsuite"""
+    import csv
+
+    if not filename:
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+        filename = f"posting_schedule_{timestamp}.csv"
+
+    with open(filename, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            'day', 'time', 'platform', 'topic', 'post_text',
+            'image_path', 'hashtags'
+        ])
+        writer.writeheader()
+
+        for item in schedule:
+            writer.writerow({
+                'day': item['day'],
+                'time': item['time'],
+                'platform': item['platform'],
+                'topic': item['topic'],
+                'post_text': item['post'][:100] + '...',
+                'image_path': item.get('image', ''),
+                'hashtags': ' '.join(item.get('hashtags', []))
+            })
+
+    return filename
+
+# ==================== FEATURE 5: TWITTER THREAD BUILDER ====================
+
+def create_twitter_thread(topic: str, research: Optional[str] = None, depth: str = "medium") -> List[str]:
+    """Break complex topics into engaging threads"""
+
+    research_context = f"\n\n**RESEARCH CONTEXT:**\n{research}" if research else ""
+
+    tweet_counts = {"short": 5, "medium": 7, "long": 10}
+    count = tweet_counts.get(depth, 7)
+
+    prompt = f"""You are creating a Twitter thread for "Plot Brew," a romantasy writing advice platform.
+
+**TOPIC:** {topic}{research_context}
+**THREAD LENGTH:** {count} tweets
+
+**YOUR VOICE:**
+- Personal and vulnerable (share writing journey)
+- Celebratory of romantasy (treat it with intellectual respect)
+- Community-focused ("we" language, not "you")
+- Geeky enthusiasm about tropes and craft
+
+**THREAD STRUCTURE:**
+1. Hook tweet - Attention-grabbing opener (can be provocative/surprising)
+2-{count-2}. Value tweets - Share specific tips, examples, insights
+{count-1}. Depth tweet - Go deeper on one key point
+{count}. CTA tweet - End with question or call-to-action
+
+**Each tweet MUST:**
+- Be under 280 characters
+- Work standalone but flow together
+- Include concrete examples when possible
+- End with intrigue to read next tweet
+
+Return ONLY this JSON format:
+
+{{
+  "tweets": [
+    "Tweet 1 text here",
+    "Tweet 2 text here",
+    ...
+  ]
+}}
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    result = extract_json(response.content[0].text)
+    return result.get('tweets', [])
+
+# ==================== FEATURE 6: REPURPOSING ENGINE ====================
+
+def repurpose_content(original_post: str, from_platform: str, to_platform: str, topic: str) -> str:
+    """Transform one post into different platform format"""
+
+    platform_specs = {
+        "twitter": "280 chars - Hook + insight + question",
+        "twitter_thread": "7 tweets breaking down the topic",
+        "threads": "500 chars - Personal story + insights",
+        "pinterest": "500 chars - Educational, keyword-rich",
+        "instagram": "2200 chars - Story + 5-7 tips",
+        "newsletter": "800-1000 words - Deep dive with examples",
+        "blog_outline": "Blog post structure with sections"
+    }
+
+    prompt = f"""You are repurposing content for "Plot Brew" across different platforms.
+
+**ORIGINAL POST ({from_platform}):**
+{original_post}
+
+**TOPIC:** {topic}
+
+**REPURPOSE TO:** {to_platform}
+**TARGET FORMAT:** {platform_specs.get(to_platform, "Standard format")}
+
+**REPURPOSING GUIDELINES:**
+- Keep the core insight/message
+- Adapt length and style to new platform
+- Maintain "Plot Brew" voice (personal, supportive, craft-focused)
+- Add platform-specific elements (e.g., newsletter needs more depth, Twitter needs brevity)
+
+Return ONLY the repurposed content (no JSON, no preamble).
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.content[0].text.strip()
+
+# ==================== FEATURE 7: CONTENT BALANCE TRACKER ====================
+
+def analyze_content_balance(topics: List[Dict]) -> Dict:
+    """Ensure balanced content mix across pillars"""
+
+    # Count by category
+    category_counts = {}
+    for topic in topics:
+        category = topic.get('category', 'general')
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    total = len(topics)
+
+    # Calculate percentages
+    balance = {}
+    for cat, count in category_counts.items():
+        balance[cat] = {
+            "count": count,
+            "percentage": (count / total * 100) if total > 0 else 0
+        }
+
+    # Identify issues
+    warnings = []
+    if any(b['percentage'] > 50 for b in balance.values()):
+        dominant = max(balance.items(), key=lambda x: x[1]['percentage'])
+        warnings.append(f"Over-indexed on {dominant[0]} ({dominant[1]['percentage']:.0f}%)")
+
+    missing_categories = set(['craft', 'tropes', 'market', 'structure']) - set(balance.keys())
+    if missing_categories:
+        warnings.append(f"Missing categories: {', '.join(missing_categories)}")
+
+    return {
+        "balance": balance,
+        "warnings": warnings,
+        "total_topics": total
+    }
+
+# ==================== FEATURE 8: INSTAGRAM CAROUSEL BUILDER ====================
+
+def create_carousel(topic: str, research: Optional[str] = None, slide_count: int = 7) -> List[Dict]:
+    """Create multi-slide Instagram carousel"""
+
+    research_context = f"\n\n**RESEARCH CONTEXT:**\n{research}" if research else ""
+
+    prompt = f"""You are creating an Instagram carousel for "Plot Brew."
+
+**TOPIC:** {topic}{research_context}
+**SLIDES:** {slide_count}
+
+**CAROUSEL STRUCTURE:**
+Slide 1: Cover (title + hook)
+Slides 2-{slide_count-1}: Content slides (one tip/point per slide)
+Slide {slide_count}: CTA (engagement prompt)
+
+**Each slide needs:**
+- Title (2-5 words)
+- Body text (20-40 words max - must fit on visual)
+- Image prompt (describe the visual for that slide)
+
+**VOICE:** Personal, supportive, craft-focused
+
+Return ONLY this JSON format:
+
+{{
+  "slides": [
+    {{
+      "number": 1,
+      "type": "cover",
+      "title": "5 Ways to...",
+      "body": "Hook text here",
+      "image_prompt": "Cover design with..."
+    }},
+    {{
+      "number": 2,
+      "type": "content",
+      "title": "Tip 1",
+      "body": "Brief explanation",
+      "image_prompt": "Visual showing..."
+    }},
+    ...
+  ]
+}}
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    result = extract_json(response.content[0].text)
+    return result.get('slides', [])
+
+# ==================== FEATURE 9: EMOJI OPTIMIZATION ====================
+
+def optimize_emoji_placement(post: str, platform: str) -> str:
+    """Add strategic emojis for engagement"""
+
+    platform_emoji_levels = {
+        "twitter": "light",  # 1-2 emojis
+        "threads": "medium",  # 2-3 emojis
+        "pinterest": "light",  # 1-2 emojis
+        "instagram": "heavy"  # 3-5 emojis, especially in hashtag sections
+    }
+
+    level = platform_emoji_levels.get(platform, "medium")
+
+    prompt = f"""Add strategic emojis to this social media post.
+
+**PLATFORM:** {platform}
+**EMOJI LEVEL:** {level}
+
+**POST:**
+{post}
+
+**GUIDELINES:**
+- Use emojis to break up text and add visual interest
+- Don't overdo it - keep it professional
+- Use relevant emojis (📚 ✍️ 💫 ✨ 📖 💭 ⭐ 🎨 etc.)
+- Place at start of sentences or after key phrases
+- For Instagram: emojis in hashtag areas are OK
+
+Return ONLY the post with emojis added (no JSON, no explanation).
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=1000,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.content[0].text.strip()
+
+# ==================== FEATURE 10: CTA VARIATIONS ====================
+
+def generate_cta_options(topic: str, goal: str = "engagement") -> List[Dict]:
+    """Create different calls-to-action to test"""
+
+    prompt = f"""Generate 5 different CTAs (calls-to-action) for a social media post.
+
+**TOPIC:** {topic}
+**GOAL:** {goal}
+
+**CTA TYPES:**
+1. Discussion starter - Ask thought-provoking question
+2. Viral/share - Encourage tagging or sharing
+3. Easy engagement - Simple emoji or one-word response
+4. Save prompt - Encourage saving for later (algorithm boost)
+5. Community contribution - Ask audience to add their own tips
+
+Return ONLY this JSON format:
+
+{{
+  "ctas": [
+    {{
+      "type": "discussion",
+      "text": "What's your favorite example of this?",
+      "purpose": "Start conversation in comments"
+    }},
+    {{
+      "type": "viral",
+      "text": "Tag a writer friend who needs this!",
+      "purpose": "Increase reach through shares"
+    }},
+    ...
+  ]
+}}
+"""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    result = extract_json(response.content[0].text)
+    return result.get('ctas', [])
+
 # ==================== PHASE 1: TOPIC BRAINSTORMING ====================
 
 def brainstorm_direct_topics(count: int = 5) -> List[Dict[str, str]]:
@@ -836,6 +1190,20 @@ def main():
 
     print(f"\n✅ Selected {len(selected_topics)} topics for content creation")
 
+    # CONTENT BALANCE CHECK
+    balance_analysis = analyze_content_balance(selected_topics)
+    if balance_analysis['total_topics'] > 0:
+        print("\n📊 CONTENT MIX ANALYSIS:")
+        for category, data in balance_analysis['balance'].items():
+            bar_length = int(data['percentage'] / 10)
+            bar = "█" * bar_length + "░" * (10 - bar_length)
+            print(f"  {category.capitalize():15} {data['percentage']:5.0f}% {bar} ({data['count']} posts)")
+
+        if balance_analysis['warnings']:
+            print("\n⚠️  BALANCE WARNINGS:")
+            for warning in balance_analysis['warnings']:
+                print(f"  • {warning}")
+
     # PHASE 3: RESEARCH (for each topic)
     print("\n" + "="*80)
     print("PHASE 3: RESEARCH")
@@ -895,7 +1263,84 @@ def main():
             while not satisfied:
                 print(f"\n{platform.upper()}:")
 
-                # A/B TESTING: Generate 3 variations
+                # SPECIAL FORMATS (Thread or Carousel)
+                use_special_format = False
+
+                if platform == "twitter":
+                    if confirm_action("Create as Twitter thread instead of single tweet?"):
+                        use_special_format = "thread"
+                elif platform == "instagram":
+                    if confirm_action("Create as Instagram carousel instead of single post?"):
+                        use_special_format = "carousel"
+
+                # TWITTER THREAD
+                if use_special_format == "thread":
+                    thread_depth = prompt_user(
+                        "Thread length?",
+                        ["Short (5 tweets)", "Medium (7 tweets)", "Long (10 tweets)"]
+                    )
+                    depth = thread_depth.split()[0].lower()  # "short", "medium", or "long"
+
+                    print(f"\n🧵 Creating {depth} Twitter thread...")
+                    tweets = create_twitter_thread(
+                        topic_data['topic'],
+                        topic_data.get('research'),
+                        depth
+                    )
+
+                    if tweets:
+                        print("\n" + "─"*60)
+                        for i, tweet in enumerate(tweets, 1):
+                            print(f"\nTWEET {i}/{len(tweets)}")
+                            print(tweet)
+                            print(f"Characters: {len(tweet)}/280")
+                            print("─"*60)
+
+                        if confirm_action("\nAccept this thread?"):
+                            # Store as thread
+                            topic_data['posts'][platform] = "\n\n".join([f"{i}. {t}" for i, t in enumerate(tweets, 1)])
+                            topic_data['post_type'] = topic_data.get('post_type', {})
+                            topic_data['post_type'][platform] = 'thread'
+                            topic_data['thread_tweets'] = tweets
+                            satisfied = True
+                    continue
+
+                # INSTAGRAM CAROUSEL
+                elif use_special_format == "carousel":
+                    slide_count = int(prompt_user(
+                        "How many slides?",
+                        ["5 slides", "7 slides", "10 slides"]
+                    ).split()[0])
+
+                    print(f"\n🎠 Creating {slide_count}-slide carousel...")
+                    slides = create_carousel(
+                        topic_data['topic'],
+                        topic_data.get('research'),
+                        slide_count
+                    )
+
+                    if slides:
+                        print("\n" + "─"*60)
+                        for slide in slides:
+                            print(f"\nSLIDE {slide['number']} - {slide['type'].upper()}")
+                            print(f"Title: {slide['title']}")
+                            print(f"Body: {slide['body']}")
+                            print(f"Image: {slide['image_prompt'][:80]}...")
+                            print("─"*60)
+
+                        if confirm_action("\nAccept this carousel?"):
+                            # Store carousel data
+                            topic_data['posts'][platform] = "\n\n".join([
+                                f"Slide {s['number']}: {s['title']}\n{s['body']}"
+                                for s in slides
+                            ])
+                            topic_data['post_type'] = topic_data.get('post_type', {})
+                            topic_data['post_type'][platform] = 'carousel'
+                            topic_data['carousel_slides'] = slides
+                            satisfied = True
+                    continue
+
+                # STANDARD POST WITH A/B TESTING
                 print("🎨 Generating 3 variations for A/B testing...")
                 variations = draft_post_variations(
                     topic_data['topic'],
@@ -958,6 +1403,37 @@ def main():
                         if platform == "instagram" and recommended:
                             current_post += "\n\n" + " ".join(recommended)
 
+                    # CTA VARIATIONS
+                    if confirm_action("\n🎯 Try different CTA (call-to-action) options?"):
+                        print("  Generating CTA options...")
+                        cta_options = generate_cta_options(topic_data['topic'], "engagement")
+
+                        if cta_options:
+                            print("\n" + "─"*60)
+                            for i, cta in enumerate(cta_options, 1):
+                                print(f"\n{i}. [{cta['type'].upper()}] {cta['text']}")
+                                print(f"   Purpose: {cta['purpose']}")
+                            print("─"*60)
+
+                            cta_choice = input("\nSelect CTA number (or Enter to keep current): ").strip()
+                            if cta_choice.isdigit() and 1 <= int(cta_choice) <= len(cta_options):
+                                selected_cta = cta_options[int(cta_choice) - 1]
+                                # Replace last line/question with new CTA
+                                lines = current_post.split('\n')
+                                lines[-1] = selected_cta['text']
+                                current_post = '\n'.join(lines)
+                                print(f"✓ CTA updated to: {selected_cta['text']}")
+
+                    # EMOJI OPTIMIZATION
+                    if confirm_action("\n✨ Add emojis to post?"):
+                        print("  Optimizing emoji placement...")
+                        current_post = optimize_emoji_placement(current_post, platform)
+                        print("\n📝 POST WITH EMOJIS:")
+                        print(current_post)
+                        if not confirm_action("\nKeep emojis?"):
+                            # Revert if user doesn't like it
+                            current_post = selected_var.get('post', '')
+
                     topic_data['posts'][platform] = current_post
                     satisfied = True
 
@@ -973,9 +1449,70 @@ def main():
                     satisfied = True
 
     # Save session after posts
-    if confirm_action("\n💾 Save session before image generation?"):
-        session_file = save_session({'selected_topics': selected_topics}, 'image_generation')
+    if confirm_action("\n💾 Save session before continuing?"):
+        session_file = save_session({'selected_topics': selected_topics}, 'repurposing')
         print(f"✓ Session saved: {session_file}")
+
+    # REPURPOSING ENGINE
+    print("\n" + "="*80)
+    print("PHASE 4.5: CONTENT REPURPOSING (OPTIONAL)")
+    print("="*80)
+
+    if confirm_action("\n♻️  Repurpose any posts to other formats?"):
+        for i, topic_data in enumerate(selected_topics, 1):
+            if not topic_data.get('posts'):
+                continue
+
+            print(f"\n--- TOPIC {i}: {topic_data['topic']} ---")
+            print(f"Existing posts: {', '.join(topic_data['posts'].keys())}")
+
+            if confirm_action(f"Repurpose content for this topic?"):
+                # Show repurposing options
+                source_platform = prompt_user(
+                    "Which post would you like to repurpose FROM?",
+                    list(topic_data['posts'].keys())
+                )
+
+                repurpose_options = [
+                    "Newsletter section (800-1000 words)",
+                    "Blog post outline",
+                    "Twitter thread (if not already created)",
+                    "LinkedIn article",
+                    "Skip repurposing for this topic"
+                ]
+
+                repurpose_to = prompt_user(
+                    f"Repurpose {source_platform} post TO:",
+                    repurpose_options
+                )
+
+                if "Skip" not in repurpose_to:
+                    target_format = repurpose_to.split('(')[0].strip().lower().replace(' ', '_')
+                    original_post = topic_data['posts'][source_platform]
+
+                    print(f"\n♻️  Repurposing from {source_platform} to {target_format}...")
+                    repurposed = repurpose_content(
+                        original_post,
+                        source_platform,
+                        target_format,
+                        topic_data['topic']
+                    )
+
+                    print("\n" + "─"*60)
+                    print(f"REPURPOSED CONTENT ({target_format}):")
+                    print(repurposed[:500] + "..." if len(repurposed) > 500 else repurposed)
+                    print("─"*60)
+
+                    if confirm_action("\nSave this repurposed content?"):
+                        # Save to file
+                        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+                        filename = f"repurposed_{target_format}_{timestamp}.txt"
+                        with open(filename, 'w', encoding='utf-8') as f:
+                            f.write(f"TOPIC: {topic_data['topic']}\n\n")
+                            f.write(f"FORMAT: {target_format}\n\n")
+                            f.write(f"{'='*60}\n\n")
+                            f.write(repurposed)
+                        print(f"✓ Saved to: {filename}")
 
     # PHASE 5: IMAGE GENERATION (with feedback loop)
     print("\n" + "="*80)
@@ -1047,8 +1584,35 @@ def main():
             extras_str = " + " + ", ".join(extras) if extras else ""
             print(f"   • {platform}: {len(post)} chars{extras_str}")
 
-    if not confirm_action("\n✅ Ready to post?"):
-        print("\n💾 Content saved. Exiting without posting.")
+    # CONTENT CALENDAR
+    if confirm_action("\n📅 Generate posting schedule?"):
+        days = int(prompt_user(
+            "Schedule over how many days?",
+            ["3 days", "7 days", "14 days", "30 days"]
+        ).split()[0])
+
+        schedule = suggest_posting_schedule(selected_topics, days)
+
+        print("\n📅 SUGGESTED POSTING SCHEDULE:\n")
+        current_day = None
+        for item in schedule:
+            if item['day'] != current_day:
+                print(f"\n{item['day']}:")
+                current_day = item['day']
+
+            post_type = topic_data.get('post_type', {}).get(item['platform'], 'post')
+            type_emoji = "🧵" if post_type == "thread" else "🎠" if post_type == "carousel" else "📱"
+
+            print(f"  {item['time']} - {type_emoji} {item['platform'].capitalize()}: \"{item['topic'][:50]}...\"")
+
+        if confirm_action("\n💾 Export schedule to CSV?"):
+            csv_file = export_schedule_csv(schedule)
+            print(f"✓ Schedule exported to: {csv_file}")
+            print("  Import this into Buffer, Hootsuite, or use for manual scheduling")
+
+    if not confirm_action("\n✅ Ready to post NOW?"):
+        print("\n💾 Content and schedule saved. Exiting without posting.")
+        print("   You can use the schedule to post manually or import to scheduling tools.")
         return
 
     print("\n📤 POSTING...")
